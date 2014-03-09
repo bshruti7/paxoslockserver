@@ -1,4 +1,4 @@
-package src.com.uw.paxos;
+package com.uw.paxos;
 /**
  * 
  */
