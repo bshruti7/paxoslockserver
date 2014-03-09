@@ -20,10 +20,4 @@ public abstract class Client {
 	
 	public abstract String releaseLock();
 	
-	
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		
-	}
-
 }

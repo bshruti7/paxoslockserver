@@ -10,12 +10,12 @@ import java.net.*;
  * @author Shruti
  *
  */
-public class Client1 extends Client {
+public class PaxosClient extends Client {
 
 	/**
 	 * 
 	 */
-	public Client1() {
+	public PaxosClient() {
 		// TODO Auto-generated constructor stub
 	}
 	public int acquireLock(){
@@ -54,7 +54,7 @@ public class Client1 extends Client {
 		// TODO Auto-generated method stub
 		
 		
-		Client1 c1=new Client1();
+		PaxosClient c1=new PaxosClient();
 		System.out.println("Lock required is "+c1.acquireLock());
 		try{
 		//Make TCP connection to server
