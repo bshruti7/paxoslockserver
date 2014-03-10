@@ -1,7 +1,9 @@
 package com.uw.paxos.roles;
 
 import java.io.IOException;
+import java.util.Hashtable;
 
+import com.uw.paxos.ClientId;
 import com.uw.paxos.connection.ClientRequest;
 import com.uw.paxos.connection.Server;
 import com.uw.paxos.connection.UDPServer;
@@ -18,10 +20,12 @@ import com.uw.paxos.utils.Utils;
 public class LearnerThread extends StoppableLoopThread {
 	
 	Server server;
+	private Hashtable<Integer, ClientId> lockState;
 	
-	public LearnerThread(int portNumber) {
+	public LearnerThread(Hashtable< Integer, ClientId> lockState,int portNumber) {
 		try {
 	        server = new UDPServer(portNumber);
+	        this.lockState= lockState;
         } catch (IOException ex) {
 	        Utils.logError("Unable to bind to port : " + portNumber + ". Exception: " + ex.getMessage());
         }

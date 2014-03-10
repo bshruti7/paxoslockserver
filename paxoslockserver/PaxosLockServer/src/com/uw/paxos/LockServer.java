@@ -1,5 +1,6 @@
 package com.uw.paxos;
 import java.io.*;
+import java.util.Hashtable;
 
 import com.uw.paxos.roles.AcceptorThread;
 import com.uw.paxos.roles.LearnerThread;
@@ -11,6 +12,13 @@ import com.uw.paxos.roles.StoppableLoopThread;
  *
  */
 public class LockServer {
+	
+	private Hashtable<Integer, ClientId> lockState; 
+	
+	public LockServer() {
+		
+		lockState = new Hashtable<>();
+	}
 
 	public static void main(String args[]) throws Exception{
 		LockServer lockServer = new LockServer();
@@ -24,9 +32,10 @@ public class LockServer {
 		StoppableLoopThread[] roleThreads = new StoppableLoopThread[3];
 		
 		// TODO: Extract port number from arguments to this process
-		roleThreads[0] = new ProposerThread(6000);
-		roleThreads[1] = new AcceptorThread(6001);
-		roleThreads[2] = new LearnerThread(6002);
+		roleThreads[0] = new ProposerThread(lockState,6000);
+		roleThreads[1] = new AcceptorThread(lockState, 6001);
+		roleThreads[2] = new LearnerThread(lockState,6002);
+		
 		
 		// Start threads with different roles
 		for (Thread thread : roleThreads) {
