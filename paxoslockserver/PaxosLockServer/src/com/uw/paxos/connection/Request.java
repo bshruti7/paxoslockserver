@@ -2,6 +2,8 @@ package com.uw.paxos.connection;
 
 import java.net.InetAddress;
 
+import com.uw.paxos.RequestType;
+
 /**
  * Data class containing request from client. 
  * This includes the requester's IP Address, port and the data received.
@@ -13,6 +15,7 @@ public class Request {
 	private InetAddress clientIpAddress;
 	private int clientPort;
 	private String requestData;
+	private RequestType requestType;
 	
 	public Request(InetAddress clientIpAddress, int clientPort, String requestData) {
 		this.clientIpAddress = clientIpAddress;
@@ -30,5 +33,13 @@ public class Request {
 	
 	public String getRequestData() {
 		return requestData;
+	}
+
+	public RequestType getRequestType() {
+		return requestType;
+	}
+
+	public void setRequestType(RequestType requestType) {
+		this.requestType = requestType;
 	}	
 }

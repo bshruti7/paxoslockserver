@@ -5,6 +5,7 @@ import java.util.concurrent.BlockingQueue;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.uw.paxos.Proposer;
 import com.uw.paxos.RequestMessage;
 import com.uw.paxos.connection.Request;
 import com.uw.paxos.connection.Server;
@@ -47,15 +48,17 @@ public class ProposerThread extends StoppableLoopThread {
 			// ClientRequestAcceptorThread puts a dummy element in this queue
 			// to wake ProposerThread up after maximum of 15 seconds.
 			request = clientRequestQueue.take();
-			
-			
+						
 		} catch (InterruptedException ex) {
 			Utils.logError(this.getClass().getSimpleName() + " encountered error while fetching client request from queue. \nError : " + ex.getMessage());
 		}
 		if (request.getClientPort() != 0000) {
 			Utils.logMessage(this.getClass().getSimpleName() + " started working on client request : " + request.getRequestData());
-	    	
+	    	//Valid request
+			System.out.println("Request from queue is :" + request.getRequestData() + " client PortNumber :"+request.getClientPort() + " Client IP Address"+request.getClientIpAddress());
 			// Parse and act on request
+			Proposer proposer = new Proposer(request);
+			proposer.startPaxosAlgorithm(request);
 		}
     }
 	

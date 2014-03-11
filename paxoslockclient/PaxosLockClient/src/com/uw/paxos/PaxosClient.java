@@ -25,29 +25,19 @@ public class PaxosClient extends Client {
 	}
 	public void doSomethingWithLock() {
 		
-		// add code to make function sleep() here
+		//Keep a lseep ti simulate that client is using the lock/
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			System.out.println("Interupted exception:"+ e.getMessage());
+		}
 	}
 	
 	public String releaseLock(){
 		return "Hello";
 	}
-	
-	public boolean checkLockTable(String LockName,String ClientID) {
-	/*
-		ArrayList<String> LockTable = new ArrayList<String>();
-		
-		
-		if(LockTable.size()==0) { 
-			return false; 
-			}
-		else{
-			LockTable.get(LockTable.indexOf(LockName));
-		}
-		*/
-		return true;
-	}
-	
-	/**
+
+		/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
@@ -55,28 +45,26 @@ public class PaxosClient extends Client {
 		
 		
 		PaxosClient c1=new PaxosClient();
-		System.out.println("Lock required is "+c1.acquireLock());
+		String lockRequired = "Lock"+c1.acquireLock();
+		System.out.println("Lock required is "+lockRequired) ;
 		try{
 		//Make TCP connection to server
-		Socket newSocket=new Socket("127.0.0.1",6000);
-		
-		/*
-		//For output stream to Server
-		PrintWriter writer=new PrintWriter(newSocket.getOutputStream());
-		writer.println("Lock"+c1.acquireLock());
-		*/
-		
-		
-		DataOutputStream outToServer = new DataOutputStream(newSocket.getOutputStream());
-		outToServer.writeBytes("Lock Number:"+c1.acquireLock());
-		
-		/*
-		//For the input stream from server
-		InputStreamReader stream=new InputStreamReader(newSocket.getInputStream());
-		BufferedReader reader=new BufferedReader(stream);
-		String message=reader.readLine();
-	*/
-		newSocket.close();
+			DatagramSocket newSocket = new DatagramSocket();
+			System.out.println("Enter the destination ip address:");
+			BufferedReader br= new BufferedReader(new InputStreamReader(System.in));
+			String Destination_IPAddress=br.readLine();
+			System.out.println("Enter the destination PortNumber:");
+			BufferedReader br1= new BufferedReader(new InputStreamReader(System.in));
+			String Destination_Port=br1.readLine();
+			
+			System.out.println("Destination Ip: "+Destination_IPAddress +", Destination port:"+ Destination_Port );
+			InetAddress aHost = InetAddress.getByName(Destination_IPAddress);
+			int serverPort = Integer.valueOf(Destination_Port).intValue();
+			byte[] b = lockRequired.getBytes();
+			DatagramPacket request = new DatagramPacket(b,lockRequired.length(), aHost, serverPort);
+			newSocket.send(request);
+			newSocket.close();
+	
 		}
 		catch (IOException e){
 			e.printStackTrace();
