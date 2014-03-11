@@ -13,6 +13,15 @@ public abstract class StoppableLoopThread extends Thread{
 	
 	private boolean shutdownRequested;
 	
+	/** 
+	 * Protected constructor to allow derived class to call this one.
+	 * 
+	 * @param locks DistributedLocks used by current server
+	 */
+	protected StoppableLoopThread() {
+		shutdownRequested = false;
+	}
+	
 	/**
 	 * Call this function to request shutdown of this thread
 	 */

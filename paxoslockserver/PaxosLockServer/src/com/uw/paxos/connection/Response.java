@@ -9,12 +9,12 @@ import java.net.InetAddress;
  * @author Samiksha Sharma
  *
  */
-public class ServerResponse {
+public class Response {
 	private InetAddress receiverIpAddress;
 	private int receiverPort;
 	private String responseData;
 	
-	public ServerResponse(InetAddress clientIpAddress, int clientPort, String data) {
+	public Response(InetAddress clientIpAddress, int clientPort, String data) {
 		this.receiverIpAddress = clientIpAddress;
 		this.receiverPort = clientPort;
 		this.responseData = data;

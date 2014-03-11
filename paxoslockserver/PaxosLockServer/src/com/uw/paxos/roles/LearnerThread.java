@@ -1,12 +1,10 @@
 package com.uw.paxos.roles;
 
 import java.io.IOException;
-import java.util.Hashtable;
-
-import com.uw.paxos.ClientId;
-import com.uw.paxos.connection.ClientRequest;
+import com.uw.paxos.connection.Request;
 import com.uw.paxos.connection.Server;
 import com.uw.paxos.connection.UDPServer;
+import com.uw.paxos.locks.DistributedLocks;
 import com.uw.paxos.utils.Utils;
 
 /**
@@ -19,13 +17,13 @@ import com.uw.paxos.utils.Utils;
  */
 public class LearnerThread extends StoppableLoopThread {
 	
-	Server server;
-	private Hashtable<Integer, ClientId> lockState;
+	private DistributedLocks locks;
+	private Server server;
 	
-	public LearnerThread(Hashtable< Integer, ClientId> lockState,int portNumber) {
+	public LearnerThread(DistributedLocks locks, int portNumber) {
+		this.locks = locks;
 		try {
 	        server = new UDPServer(portNumber);
-	        this.lockState= lockState;
         } catch (IOException ex) {
 	        Utils.logError("Unable to bind to port : " + portNumber + ". Exception: " + ex.getMessage());
         }
@@ -33,11 +31,10 @@ public class LearnerThread extends StoppableLoopThread {
 	
 	@Override
     public void doProcessing() {
-		ClientRequest request = server.receiveRequest();
+		Request request = server.receiveRequest();
 		
 		if (request != null) {
-	    	// Do something with received request
-	    	Utils.logMessage(this.getClass().getSimpleName() + " Received Command: " + request.getRequestData());
+	    	Utils.logMessage(this.getClass().getSimpleName() + " received command: " + request.getRequestData());
 		}	    
     }
 }

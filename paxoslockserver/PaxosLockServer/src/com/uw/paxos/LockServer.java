@@ -1,8 +1,12 @@
 package com.uw.paxos;
 import java.io.*;
-import java.util.Hashtable;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
+import com.uw.paxos.connection.Request;
+import com.uw.paxos.locks.DistributedLocks;
 import com.uw.paxos.roles.AcceptorThread;
+import com.uw.paxos.roles.ClientRequestAcceptorThread;
 import com.uw.paxos.roles.LearnerThread;
 import com.uw.paxos.roles.ProposerThread;
 import com.uw.paxos.roles.StoppableLoopThread;
@@ -13,11 +17,12 @@ import com.uw.paxos.roles.StoppableLoopThread;
  */
 public class LockServer {
 	
-	private Hashtable<Integer, ClientId> lockState; 
+	private DistributedLocks locksTable; 
+	private BlockingQueue<Request> clientRequestQueue;
 	
 	public LockServer() {
-		
-		lockState = new Hashtable<>();
+		locksTable = new DistributedLocks();
+		clientRequestQueue = new LinkedBlockingQueue<>();
 	}
 
 	public static void main(String args[]) throws Exception{
@@ -29,16 +34,16 @@ public class LockServer {
 		boolean shutdownRequested = false;
 		
 		// Create three threads, on each for Proposer, Acceptor and Learner
-		StoppableLoopThread[] roleThreads = new StoppableLoopThread[3];
+		StoppableLoopThread[] threads = new StoppableLoopThread[4];
 		
 		// TODO: Extract port number from arguments to this process
-		roleThreads[0] = new ProposerThread(lockState,6000);
-		roleThreads[1] = new AcceptorThread(lockState, 6001);
-		roleThreads[2] = new LearnerThread(lockState,6002);
-		
+		threads[0] = new ClientRequestAcceptorThread(clientRequestQueue, 6000);
+		threads[1] = new ProposerThread(clientRequestQueue, locksTable, 6001);
+		threads[2] = new AcceptorThread(6002);
+		threads[3] = new LearnerThread(locksTable, 6003);
 		
 		// Start threads with different roles
-		for (Thread thread : roleThreads) {
+		for (Thread thread : threads) {
 			thread.start();
         }
 		
@@ -48,7 +53,7 @@ public class LockServer {
 			String command = br.readLine();
 			if(0 == command.compareToIgnoreCase("shutdown")) {
 				shutdownRequested = true;
-				for (StoppableLoopThread thread : roleThreads) {
+				for (StoppableLoopThread thread : threads) {
 					thread.requestShutdown();
 		        }
 			}

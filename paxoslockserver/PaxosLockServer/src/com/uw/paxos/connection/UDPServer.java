@@ -30,8 +30,8 @@ public class UDPServer extends Server {
 	}
 	
 	@Override
-    public ClientRequest receiveRequest() {
-		ClientRequest clientRequest = null;
+    public Request receiveRequest() {
+		Request clientRequest = null;
 		try {
 			byte []buffer = new byte[MAX_BUFFER_SIZE];
 			DatagramPacket p = new DatagramPacket(buffer, MAX_BUFFER_SIZE);
@@ -44,7 +44,7 @@ public class UDPServer extends Server {
 			String requestDataAsString = new String(responseBytes, defaultCharset);
 			logMessage("Client Request as String: " + requestDataAsString);
 			
-			clientRequest = new ClientRequest(p.getAddress(), p.getPort(), requestDataAsString);
+			clientRequest = new Request(p.getAddress(), p.getPort(), requestDataAsString);
         } catch (SocketTimeoutException ex) {
         	// Do nothing
         } catch (IOException ex) {
@@ -55,7 +55,7 @@ public class UDPServer extends Server {
     }
 
 	@Override
-    public void sendResponse(ServerResponse serverResponse) {
+    public void sendResponse(Response serverResponse) {
 			
 		logMessage("Response: " + serverResponse.getResponseData());
 		byte []responseBuffer = serverResponse.getResponseData().getBytes(defaultCharset);

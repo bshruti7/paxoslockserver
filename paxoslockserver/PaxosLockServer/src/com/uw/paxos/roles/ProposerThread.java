@@ -1,12 +1,12 @@
 package com.uw.paxos.roles;
 
 import java.io.IOException;
-import java.util.Hashtable;
+import java.util.concurrent.BlockingQueue;
 
-import com.uw.paxos.ClientId;
-import com.uw.paxos.connection.ClientRequest;
+import com.uw.paxos.connection.Request;
 import com.uw.paxos.connection.Server;
 import com.uw.paxos.connection.UDPServer;
+import com.uw.paxos.locks.DistributedLocks;
 import com.uw.paxos.utils.Utils;
 
 /**
@@ -22,14 +22,15 @@ import com.uw.paxos.utils.Utils;
  */
 public class ProposerThread extends StoppableLoopThread {
 	
-	Server server;
+	private BlockingQueue<Request> clientRequestQueue;
+	private DistributedLocks locks;
+	private Server server;
 	
-	Hashtable<Integer, ClientId> lockState;
-	
-	public ProposerThread(Hashtable< Integer, ClientId> lockState, int portNumber) {
+	public ProposerThread(BlockingQueue<Request> clientRequestQueue, DistributedLocks locks, int portNumber) {
+		this.locks = locks;
+		this.clientRequestQueue = clientRequestQueue;
 		try {
-				server = new UDPServer(portNumber);
-				this.lockState= lockState;
+	        server = new UDPServer(portNumber);
         } catch (IOException ex) {
 	        Utils.logError("Unable to bind to port : " + portNumber + ". Exception: " + ex.getMessage());
         }
@@ -37,11 +38,19 @@ public class ProposerThread extends StoppableLoopThread {
 	
 	@Override
     public void doProcessing() {
-		ClientRequest request = server.receiveRequest();
-		
-		if (request != null) {
-	    	// Do something with received request
-	    	Utils.logMessage(this.getClass().getSimpleName() + " Received Command: " + request.getRequestData());
-		}    
+		Request request = null;
+		try {
+			// Blocking call until an element is available in the queue.
+			// ClientRequestAcceptorThread puts a dummy element in this queue
+			// to wake ProposerThread up after maximum of 15 seconds.
+			request = clientRequestQueue.take();
+		} catch (InterruptedException ex) {
+			Utils.logError(this.getClass().getSimpleName() + " encountered error while fetching client request from queue. \nError : " + ex.getMessage());
+		}
+		if (request.getClientPort() != 0000) {
+			Utils.logMessage(this.getClass().getSimpleName() + " started working on client request : " + request.getRequestData());
+	    	
+			// Parse and act on request
+		}
     }
 }

@@ -25,9 +25,9 @@ public abstract class Server {
 	 * This function has a 15 second timeout, and returns null after that.
 	 * @return
 	 */
-	public abstract ClientRequest receiveRequest();
+	public abstract Request receiveRequest();
 	
-	public abstract void sendResponse(ServerResponse response);
+	public abstract void sendResponse(Response response);
 	
 	protected abstract void shutdownServer() throws IOException;
 	

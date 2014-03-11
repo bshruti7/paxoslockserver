@@ -38,8 +38,8 @@ public class Proposer implements Runnable {
 	
 	@Override
 	public void run() {
-	System.out.println("Inside Proposer thread with name: " + Thread.currentThread().getName());
-	processClientRequest(request);
+		System.out.println("Inside Proposer thread with name: " + Thread.currentThread().getName());
+		processClientRequest(request);
 	}
 
 	
