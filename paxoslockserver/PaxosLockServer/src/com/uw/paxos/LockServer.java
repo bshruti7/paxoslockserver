@@ -1,8 +1,10 @@
 package com.uw.paxos;
 import java.io.*;
+import java.net.InetAddress;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import com.google.gson.Gson;
 import com.uw.paxos.connection.Request;
 import com.uw.paxos.locks.DistributedLocks;
 import com.uw.paxos.roles.AcceptorThread;
@@ -48,6 +50,11 @@ public class LockServer {
         }
 		
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		
+		Gson gson = new Gson();
+		Request r = new Request(InetAddress.getLocalHost(), 6789, "Hi Samiksha");
+		String jsonString = gson.toJson(r);
+		Request recovered = gson.fromJson(jsonString, Request.class);		
 		
 		while (!shutdownRequested) {
 			String command = br.readLine();

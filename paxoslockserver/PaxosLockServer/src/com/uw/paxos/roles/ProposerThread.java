@@ -3,6 +3,9 @@ package com.uw.paxos.roles;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.uw.paxos.RequestMessage;
 import com.uw.paxos.connection.Request;
 import com.uw.paxos.connection.Server;
 import com.uw.paxos.connection.UDPServer;
@@ -44,6 +47,8 @@ public class ProposerThread extends StoppableLoopThread {
 			// ClientRequestAcceptorThread puts a dummy element in this queue
 			// to wake ProposerThread up after maximum of 15 seconds.
 			request = clientRequestQueue.take();
+			
+			
 		} catch (InterruptedException ex) {
 			Utils.logError(this.getClass().getSimpleName() + " encountered error while fetching client request from queue. \nError : " + ex.getMessage());
 		}
@@ -53,4 +58,8 @@ public class ProposerThread extends StoppableLoopThread {
 			// Parse and act on request
 		}
     }
+	
+	private void processRequest(Request request) {
+		
+	}
 }
