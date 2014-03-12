@@ -19,6 +19,9 @@ public class PaxosMessage {
 	private ClientId clientId;
 	private String proposerId;
 	private int lockId;
+	private int highestProposalNumberSeen;
+	private int proposalNumber;
+	
 	
 	/**
 	 * Deserialize this Java object from json string
@@ -71,5 +74,21 @@ public class PaxosMessage {
 
 	public void setProposerId(String proposerId) {
 		this.proposerId = proposerId;
+	}
+
+	public int getHighestProposalNumberSeen() {
+		return highestProposalNumberSeen;
+	}
+
+	public void setHighestProposalNumberSeen(int highestProposalNumberSeen) {
+		this.highestProposalNumberSeen = highestProposalNumberSeen;
+	}
+
+	public int getProposalNumber() {
+		return proposalNumber;
+	}
+
+	public void setProposalNumber(int proposalNumber) {
+		this.proposalNumber = proposalNumber;
 	}
 }	

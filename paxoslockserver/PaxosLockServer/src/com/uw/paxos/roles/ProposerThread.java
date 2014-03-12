@@ -34,6 +34,8 @@ public class ProposerThread extends StoppableLoopThread {
 	private BlockingQueue<ClientMessage> clientRequestQueue;
 	private DistributedLocks locks;
 	private Server server;
+	private int proposalNumber;
+	private int proposalID;
 	
 	public ProposerThread(BlockingQueue<ClientMessage> clientRequestQueue, DistributedLocks locks, int portNumber) {
 		this.locks = locks;
@@ -80,10 +82,20 @@ public class ProposerThread extends StoppableLoopThread {
 				}
 			}
 		}
-		
-		// Parse and act on request
-		// Proposer proposer = new Proposer(clientMessage);
-		// proposer.startPaxosAlgorithm(clientMessage);
-		
+		else{//The client has sent out a lock request .
+			//Check if the requested lock is  available in the distributed lock table.
+			Lock lock = locks.getLock(clientMessage.getLockId());
+			if(lock.isAcquired()){
+				//Add to  lock waiting queue.
+				lock.addWaitingClient(clientMessage.getClientId());
+				//What next???
+			}
+			else{
+				// Parse and act on request
+				 Proposer proposer = new Proposer();
+				 proposalNumber = proposalNumber+1;
+				 proposer.startPaxosAlgorithm(clientMessage,proposalNumber);
+			}
+		}
 	}
 }

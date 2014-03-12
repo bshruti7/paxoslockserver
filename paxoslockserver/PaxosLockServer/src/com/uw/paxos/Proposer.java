@@ -7,7 +7,9 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import com.uw.paxos.connection.Multicast;
 import com.uw.paxos.connection.Request;
+import com.uw.paxos.messages.ClientMessage;
 import com.uw.paxos.messages.PaxosMessage;
 import com.uw.paxos.messages.PaxosMessageType;
 
@@ -37,18 +39,16 @@ import com.uw.paxos.messages.PaxosMessageType;
 
 
 public class Proposer {
-	private String proposerId;
-	private int proposalNumber=0; 
-	private Learner learner ;
-	private Request request;
-	
-	public Proposer(Request message){
-		this.request = message;	
+//	private String proposerId;
+//	private int proposalNumber=0; 
+//	private Learner learner ;
+////	private Request request;
+	PaxosMessage paxosMessage ;
+	Multicast multicast;
+	public Proposer(){
+		
+		Multicast multicast = new Multicast();
 	}
-	
-	public Proposer(){}
-	
-	
 
 	
 	/**
@@ -58,14 +58,14 @@ public class Proposer {
 	 * @param request
 	 * 
 	 */
-	public void processClientRequest(PaxosMessage request) {
+/*	public void processClientRequest(PaxosMessage request) {
 		// if unlock request notify learner
 		if (request.getMessageType().equals(PaxosMessageType.LOCK_ACQUIRE))
 			handleUnlockRequest(request);
 		else
 			handleLockRequest(request);
 	}
-	
+	*/
 	
 	/**
 	 * This method performs the paxos algorithm to decide if a lock can or cannot be 
@@ -75,7 +75,7 @@ public class Proposer {
 	 * 
 	 * @param request
 	 */
-	private void handleLockRequest(PaxosMessage request) {
+	/*private void handleLockRequest(PaxosMessage request) {
 		boolean isLockAvailable = learner.isLockGranted(request);
 		if (!isLockAvailable) { // if lock not available then we send reply to
 								// client informing it about it.
@@ -84,18 +84,19 @@ public class Proposer {
 			//startPaxosAlgorithm(request);
 		}
 	}
-
+*/
 	
 	/**
 	 * This method initiates the paxos algorithm to get concensus if the requested lock can be granted to the
 	 * requesting client.
 	 * @param request
 	 */
-	public void startPaxosAlgorithm(Request request) {
+	public void startPaxosAlgorithm(ClientMessage clientMessage, int proposalNumber) {
 		
 		//generate proposalNumber
-		proposalNumber = proposalNumber + 1 ;
-		sendPrepareMessage();
+		//proposalNumber = proposalNumber + 1 ;
+		
+		sendPrepareMessage(proposalNumber);
 		
 		//How to simulate this condition where this proposer gets replies from all the acceptors and then checks if quorum obtained or not?
 		//especially from the connectivity point of view. Not able to think of right way to capture promises and then check quorum
@@ -132,7 +133,7 @@ public class Proposer {
 	 */
 	private void sendAcceptMessage() {
 		// Send out a multicast message to all acceptor with an AcceptMessage
-		AcceptMessage acceptMessage = new AcceptMessage(proposerId, proposalNumber, "");
+		//AcceptMessage acceptMessage = new AcceptMessage(proposerId, proposalNumber, "");
 		
 		
 	}
@@ -153,40 +154,11 @@ public class Proposer {
 	 * Multicasts prepare messages to all the acceptors. 
 	 * 
 	 */
-	private void sendPrepareMessage() {
-	  PrepareMessage prepareMessage =  new PrepareMessage(proposerId, proposalNumber);
-	 /* try {
-		Thread.sleep(1000);
-	} catch (InterruptedException e1) {
-		// TODO Auto-generated catch block
-		e1.printStackTrace();
-	}*/
-	  DatagramSocket socket1 = null;
-		DatagramPacket outPacket1 = null;
-		final int PORT = 8888;
-		byte[] outBuf = null;
-		try {
-			socket1 = new DatagramSocket();
-		InetAddress address = InetAddress.getByName("224.2.2.4");
-		outBuf="testMessage".getBytes();
-		
-		String string1 = new String(outBuf);
-		System.out.println("String sending is "+string1);
-		outPacket1 = new DatagramPacket(outBuf, outBuf.length, address, PORT); 
-		outBuf=Integer.toString(proposalNumber).getBytes();
-		socket1.send(outPacket1);
-		System.out.println("Sent:"+string1);
-		socket1.close();
-		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	private void sendPrepareMessage(int proposalNumber) {
+	  PaxosMessage paxosMessage =  new PaxosMessage();
+	  paxosMessage.setProposalNumber(proposalNumber);
+	  paxosMessage.setMessageType(PaxosMessageType.PREPARE);
+	  multicast.sendMulticast(paxosMessage);
 	}
 	
 	
@@ -197,7 +169,7 @@ public class Proposer {
 	 * sent in request are valid(i.e client is not asking to release a lock it does not hold)
 	 * @param request
 	 */
-	private void handleUnlockRequest(PaxosMessage request) {
+/*	private void handleUnlockRequest(PaxosMessage request) {
 		boolean unlocked = learner.unlock(request);
 		if (unlocked)
 			System.out.println(request.getLockId() + " has been unlocked as requested by client "
@@ -206,5 +178,5 @@ public class Proposer {
 			System.out.println("Unlocking failed.");
 		// What to do next if unlocking failed?????
 
-	}
+	}*/
 }

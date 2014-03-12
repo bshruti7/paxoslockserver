@@ -12,7 +12,7 @@ public abstract class Client {
 	 * @param args
 	 */
 	
-	public abstract int acquireLock();
+	public abstract int getLockID();
 	public void doSomethingWithLock() {
 		
 		// add code to make function sleep() here

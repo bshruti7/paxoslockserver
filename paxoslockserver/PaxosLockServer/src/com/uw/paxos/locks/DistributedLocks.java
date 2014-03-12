@@ -9,7 +9,7 @@ package com.uw.paxos.locks;
 public class DistributedLocks {
 	
 	// Provide maximum of 20 locks
-	private final static int MAX_LOCKS = 20;
+	private final static int MAX_LOCKS = 10;
 	private Lock[] locks;
 	
 	public DistributedLocks() {
@@ -20,7 +20,7 @@ public class DistributedLocks {
 	}
 	
 	public Lock getLock(int id) {
-		assert(id >= 0 && id < 20);
+		assert(id >= 0 && id < MAX_LOCKS);
 		return locks[id];
 	}
 }
