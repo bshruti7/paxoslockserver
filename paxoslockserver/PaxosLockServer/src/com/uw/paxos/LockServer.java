@@ -7,6 +7,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import com.google.gson.Gson;
 import com.uw.paxos.connection.Request;
 import com.uw.paxos.locks.DistributedLocks;
+import com.uw.paxos.messages.ClientMessage;
 import com.uw.paxos.roles.AcceptorThread;
 import com.uw.paxos.roles.ClientRequestAcceptorThread;
 import com.uw.paxos.roles.LearnerThread;
@@ -20,7 +21,7 @@ import com.uw.paxos.roles.StoppableLoopThread;
 public class LockServer {
 	
 	private DistributedLocks locksTable; 
-	private BlockingQueue<Request> clientRequestQueue;
+	private BlockingQueue<ClientMessage> clientRequestQueue;
 	
 	public LockServer() {
 		locksTable = new DistributedLocks();
@@ -52,7 +53,7 @@ public class LockServer {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		
 		Gson gson = new Gson();
-		Request r = new Request(InetAddress.getLocalHost(), 6789, "Hi Samiksha");
+		Request r = new Request();
 		String jsonString = gson.toJson(r);
 		Request recovered = gson.fromJson(jsonString, Request.class);		
 		

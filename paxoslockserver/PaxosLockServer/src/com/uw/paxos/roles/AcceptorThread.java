@@ -5,10 +5,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
-import com.uw.paxos.connection.Request;
 import com.uw.paxos.connection.Server;
-import com.uw.paxos.connection.UDPServer;
-import com.uw.paxos.utils.Utils;
 
 /**
  * Acceptor class that can be run as single thread.
@@ -21,10 +18,14 @@ import com.uw.paxos.utils.Utils;
 public class AcceptorThread extends StoppableLoopThread {
 	
 	private Server server;
+	// private MulticastReceiver multicastReceiver;
 	
 	public AcceptorThread(int portNumber) {
 		try {
 	        //server = new UDPServer(portNumber);
+			
+			// Similarly, create 
+			// multicastReceiver = new MulticastReceiver("123.0.0.2", 8888);
 		    } catch (Exception ioe) {
 		      System.out.println(ioe);
 		    }
@@ -50,14 +51,44 @@ public class AcceptorThread extends StoppableLoopThread {
 		 
 		      //while (true) {
 		        inPacket = new DatagramPacket(inBuf, inBuf.length);
+		        
+		        // Stays in doProcessing 
 		        socket.receive(inPacket);
+		        
 		        String msg = new String(inBuf, 0, inPacket.getLength());
 		        System.out.println("From " + inPacket.getAddress() + "@AcceptorListenerThread Msg : " + msg);
 		      //}
-		}catch (IOException ioe) {
+		        System.out.println("Packet Data:"+inPacket.getData());
+		        System.out.println("Packet Length:"+inPacket.getLength());
+		        System.out.println("Client address:"+inPacket.getAddress());
+		        System.out.println("Client port:"+inPacket.getPort());
+		        
+		        byte[] replyContent="ReplyContent".getBytes();
+		        /*
+		        DatagramPacket reply = new DatagramPacket(inPacket.getData(),
+		        		inPacket.getLength(),inPacket.getAddress(),
+		        		inPacket.getPort());
+		        	*/
+		        
+		        DatagramPacket reply = new DatagramPacket(replyContent,
+		        		replyContent.length,inPacket.getAddress(),
+		        		inPacket.getPort());
+		        		socket.send(reply);
+		        		
+		        
+		        
+		        
+		        
+		        
+		      //}
+		    } catch (IOException ioe) {
 		      System.out.println(ioe);
 		    }
+		}
+		
+
+		    
 //    }
 //}
-	}
+	
 }

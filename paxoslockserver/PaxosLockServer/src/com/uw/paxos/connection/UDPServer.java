@@ -31,7 +31,7 @@ public class UDPServer extends Server {
 	
 	@Override
     public Request receiveRequest() {
-		Request clientRequest = null;
+		Request request = null;
 		try {
 			byte []buffer = new byte[MAX_BUFFER_SIZE];
 			DatagramPacket p = new DatagramPacket(buffer, MAX_BUFFER_SIZE);
@@ -44,23 +44,26 @@ public class UDPServer extends Server {
 			String requestDataAsString = new String(responseBytes, defaultCharset);
 			logMessage("Client Request as String: " + requestDataAsString);
 			
-			clientRequest = new Request(p.getAddress(), p.getPort(), requestDataAsString);
+			request = new Request();
+			request.setSenderIpAddress(p.getAddress());
+			request.setSenderPort(p.getPort());
+			request.setMessage(requestDataAsString);
         } catch (SocketTimeoutException ex) {
         	// Do nothing
         } catch (IOException ex) {
         	ex.printStackTrace();
         }
 		
-		return clientRequest;
+		return request;
     }
 
 	@Override
-    public void sendResponse(Response serverResponse) {
-			
-		logMessage("Response: " + serverResponse.getResponseData());
-		byte []responseBuffer = serverResponse.getResponseData().getBytes(defaultCharset);
+    public void sendResponse(Response response) {
 		
-		DatagramPacket p = new DatagramPacket(responseBuffer, responseBuffer.length, serverResponse.getReceiverIpAddress(), serverResponse.getReceiverPort());
+		logMessage("Response: " + response.getMessage());
+		byte []responseBuffer = response.getMessage().getBytes(defaultCharset);
+		
+		DatagramPacket p = new DatagramPacket(responseBuffer, responseBuffer.length, response.getReceiverIpAddress(), response.getReceiverPort());
 		try {
 	        this.serverSocket.send(p);
         } catch (IOException ex) {

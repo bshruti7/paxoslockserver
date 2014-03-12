@@ -2,6 +2,8 @@ package com.uw.paxos;
 
 import java.util.HashMap;
 
+import com.uw.paxos.messages.PaxosMessage;
+
 /**
  * This class performs the roles of a learner i.e. lock and unlock.
  * @author Aditi
@@ -19,9 +21,9 @@ public class Learner {
  * @return
  */
 
-public void lock(RequestMessage message){
-	lockToClientMapping.put(message.getLockId(),message.getClientID());	
-	informOtherLearners(message);
+public void lock(PaxosMessage message){
+	// lockToClientMapping.put(message.getLockId(), message.getClientID());	
+	// informOtherLearners(message);
 }
 
 /**
@@ -30,9 +32,9 @@ public void lock(RequestMessage message){
  * @param message
  * @return
  */
-public boolean unlock(RequestMessage message){
+public boolean unlock(PaxosMessage message){
 	
-	if(message.getClientID().equals(lockToClientMapping.containsKey(message.getLockId())))
+	if(message.getClientId().equals(lockToClientMapping.containsKey(message.getLockId())))
 	{
 		lockToClientMapping.remove(message.getLockId());
 		informOtherLearners(message);
@@ -51,7 +53,7 @@ public boolean unlock(RequestMessage message){
  * @param message
  * @return
  */
-public boolean isLockGranted(RequestMessage message){
+public boolean isLockGranted(PaxosMessage message){
 	
 	if(lockToClientMapping.containsKey(message.getLockId()))
   		return true;
@@ -63,16 +65,16 @@ public boolean isLockGranted(RequestMessage message){
  * Code to multicast lock or unlock update to all other learners in the cluster.
  * @param message
  */
-private void informOtherLearners(RequestMessage message){
+private void informOtherLearners(PaxosMessage message){
 	// multi casting code comes here.
 }
 
 /**
  * This method notifies the client when its request is successfully completed.
  */
-public void notifyClient(RequestMessage message){
+public void notifyClient(PaxosMessage message){
 
-	String clientIPAddrese = message.getClientID();
+	// String clientIPAddrese = message.getClientID();
 	//estableish TCP connection with client to notify it about successful completion of request,
 }
 

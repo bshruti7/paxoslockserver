@@ -12,23 +12,24 @@ import java.net.InetAddress;
 public class Response {
 	private InetAddress receiverIpAddress;
 	private int receiverPort;
-	private String responseData;
-	
-	public Response(InetAddress clientIpAddress, int clientPort, String data) {
-		this.receiverIpAddress = clientIpAddress;
-		this.receiverPort = clientPort;
-		this.responseData = data;
-	}
+	private String message;
 	
 	public InetAddress getReceiverIpAddress() {
-	    return receiverIpAddress;
-    }
-	
+		return receiverIpAddress;
+	}
+	public void setReceiverIpAddress(InetAddress receiverIpAddress) {
+		this.receiverIpAddress = receiverIpAddress;
+	}
 	public int getReceiverPort() {
 		return receiverPort;
 	}
-	
-	public String getResponseData() {
-		return responseData;
+	public void setReceiverPort(int receiverPort) {
+		this.receiverPort = receiverPort;
+	}
+	public String getMessage() {
+		return message;
+	}
+	public void setMessage(String message) {
+		this.message = message;
 	}	
 }
