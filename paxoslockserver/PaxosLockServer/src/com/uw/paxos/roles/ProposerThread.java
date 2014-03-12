@@ -1,16 +1,21 @@
 package com.uw.paxos.roles;
 
+import java.awt.TrayIcon.MessageType;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.uw.paxos.Proposer;
-import com.uw.paxos.RequestMessage;
 import com.uw.paxos.connection.Request;
 import com.uw.paxos.connection.Server;
 import com.uw.paxos.connection.UDPServer;
 import com.uw.paxos.locks.DistributedLocks;
+import com.uw.paxos.locks.Lock;
+import com.uw.paxos.messages.ClientId;
+import com.uw.paxos.messages.ClientMessage;
+import com.uw.paxos.messages.ClientMessageType;
+import com.uw.paxos.messages.PaxosMessage;
 import com.uw.paxos.utils.Utils;
 
 /**
@@ -26,11 +31,11 @@ import com.uw.paxos.utils.Utils;
  */
 public class ProposerThread extends StoppableLoopThread {
 	
-	private BlockingQueue<Request> clientRequestQueue;
+	private BlockingQueue<ClientMessage> clientRequestQueue;
 	private DistributedLocks locks;
 	private Server server;
 	
-	public ProposerThread(BlockingQueue<Request> clientRequestQueue, DistributedLocks locks, int portNumber) {
+	public ProposerThread(BlockingQueue<ClientMessage> clientRequestQueue, DistributedLocks locks, int portNumber) {
 		this.locks = locks;
 		this.clientRequestQueue = clientRequestQueue;
 		try {
@@ -42,27 +47,43 @@ public class ProposerThread extends StoppableLoopThread {
 	
 	@Override
     public void doProcessing() {
-		Request request = null;
+		ClientMessage message = null;
 		try {
 			// Blocking call until an element is available in the queue.
 			// ClientRequestAcceptorThread puts a dummy element in this queue
 			// to wake ProposerThread up after maximum of 15 seconds.
-			request = clientRequestQueue.take();
-						
+			message = clientRequestQueue.take();
 		} catch (InterruptedException ex) {
 			Utils.logError(this.getClass().getSimpleName() + " encountered error while fetching client request from queue. \nError : " + ex.getMessage());
 		}
-		if (request.getClientPort() != 0000) {
-			Utils.logMessage(this.getClass().getSimpleName() + " started working on client request : " + request.getRequestData());
-	    	//Valid request
-			System.out.println("Request from queue is :" + request.getRequestData() + " client PortNumber :"+request.getClientPort() + " Client IP Address"+request.getClientIpAddress());
-			// Parse and act on request
-			Proposer proposer = new Proposer(request);
-			proposer.startPaxosAlgorithm(request);
+		
+		if (message.getMessageType() != ClientMessageType.DUMMY_REQUEST) {
+			Utils.logMessage(this.getClass().getSimpleName() + " started working on client request : " + message.getMessageType());
+	    	processRequest(message);
 		}
     }
 	
-	private void processRequest(Request request) {
+	private void processRequest(ClientMessage clientMessage) {
+		
+		// Valid Request, process accordingly
+		if (clientMessage.getMessageType() == ClientMessageType.UNLOCK_REQUEST) {
+			// Check if lock is acquired by this client
+			Lock lock = locks.getLock(clientMessage.getLockId());
+			if (lock.getAcquiredBy().equals(clientMessage.getClientId())) {
+			    // Multicast to Learners with unlock command.
+				
+				// Check for other lock in the lock queue
+				ClientId clientId = lock.getNextWaitingClient();
+				
+				if (clientId != null) {
+					// Run Paxos on clientId as the lock is available now
+				}
+			}
+		}
+		
+		// Parse and act on request
+		// Proposer proposer = new Proposer(clientMessage);
+		// proposer.startPaxosAlgorithm(clientMessage);
 		
 	}
 }

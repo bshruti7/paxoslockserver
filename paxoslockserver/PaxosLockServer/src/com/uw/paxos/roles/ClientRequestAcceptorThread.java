@@ -6,6 +6,9 @@ import java.util.concurrent.BlockingQueue;
 import com.uw.paxos.connection.Request;
 import com.uw.paxos.connection.Server;
 import com.uw.paxos.connection.UDPServer;
+import com.uw.paxos.messages.ClientId;
+import com.uw.paxos.messages.ClientMessage;
+import com.uw.paxos.messages.ClientMessageType;
 import com.uw.paxos.utils.Utils;
 
 /**
@@ -23,10 +26,10 @@ import com.uw.paxos.utils.Utils;
  */
 public class ClientRequestAcceptorThread extends StoppableLoopThread {
 
-	BlockingQueue<Request> clientRequestQueue;
+	BlockingQueue<ClientMessage> clientRequestQueue;
 	private Server server;
 	
-	public ClientRequestAcceptorThread(BlockingQueue<Request> clientRequestQueue, int portNumber) {
+	public ClientRequestAcceptorThread(BlockingQueue<ClientMessage> clientRequestQueue, int portNumber) {
 		this.clientRequestQueue = clientRequestQueue;
 		try {
 	        server = new UDPServer(portNumber);
@@ -38,18 +41,23 @@ public class ClientRequestAcceptorThread extends StoppableLoopThread {
 	@Override
     public void doProcessing() {
 		Request request = server.receiveRequest();
+		ClientMessage clientMessage = null;
 		
 		if (request == null) {
-			// Send empty request to ProposerThread
+			// Send dummy request to ProposerThread
 			// This would ensure that ProposerThread is not blocked on queue.take() forever. 
 			// Doing this would wake up ProposerThread so that it can check for shutdownRequest if any.
-			request = new Request(null, 0000, null);
+			clientMessage = new ClientMessage();
+			clientMessage.setMessageType(ClientMessageType.DUMMY_REQUEST);
 		} else {
-			Utils.logMessage(this.getClass().getSimpleName() + " received command: " + request.getRequestData());
+			Utils.logMessage(this.getClass().getSimpleName() + " received request: " + request.getMessage());
+			clientMessage = ClientMessage.fromString(request.getMessage());
+			ClientId clientId = new ClientId(request.getSenderIpAddress(), request.getSenderPort());
+			clientMessage.setClientId(clientId);
 		}
-
+		
 		try {
-			clientRequestQueue.put(request);
+			clientRequestQueue.put(clientMessage);
 		} catch (InterruptedException ex) {
 			Utils.logError(this.getClass().getSimpleName() + " encountered error while placing client request on queue. \nError : " + ex.getMessage());
 		}

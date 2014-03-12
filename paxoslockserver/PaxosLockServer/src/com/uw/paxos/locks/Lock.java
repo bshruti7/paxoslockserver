@@ -2,7 +2,8 @@ package com.uw.paxos.locks;
 
 import java.util.LinkedList;
 import java.util.Queue;
-import com.uw.paxos.ClientId;
+
+import com.uw.paxos.messages.ClientId;
 
 /**
  * Class representing a single distributed lock.
@@ -33,7 +34,7 @@ public class Lock {
 	}
 	
 	public ClientId release(ClientId clientId) {
-		assert(clientId == getAcquiredBy()); // Verify that lock was held by this client
+		assert(clientId.equals(getAcquiredBy())); // Verify that lock was held by this client
 		
 		ClientId lastAcquiredBy = acquiredBy;
 		acquiredBy = null;

@@ -8,6 +8,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 
 import com.uw.paxos.connection.Request;
+import com.uw.paxos.messages.PaxosMessage;
+import com.uw.paxos.messages.PaxosMessageType;
 
 /**
  * This class performs the roles of a proposer and a learner
@@ -56,9 +58,9 @@ public class Proposer {
 	 * @param request
 	 * 
 	 */
-	public void processClientRequest(RequestMessage request) {
+	public void processClientRequest(PaxosMessage request) {
 		// if unlock request notify learner
-		if (request.getRequestType().equals(RequestType.UNLOCK_REQUEST))
+		if (request.getMessageType().equals(PaxosMessageType.LOCK_ACQUIRE))
 			handleUnlockRequest(request);
 		else
 			handleLockRequest(request);
@@ -73,7 +75,7 @@ public class Proposer {
 	 * 
 	 * @param request
 	 */
-	private void handleLockRequest(RequestMessage request) {
+	private void handleLockRequest(PaxosMessage request) {
 		boolean isLockAvailable = learner.isLockGranted(request);
 		if (!isLockAvailable) { // if lock not available then we send reply to
 								// client informing it about it.
@@ -195,11 +197,11 @@ public class Proposer {
 	 * sent in request are valid(i.e client is not asking to release a lock it does not hold)
 	 * @param request
 	 */
-	private void handleUnlockRequest(RequestMessage request) {
+	private void handleUnlockRequest(PaxosMessage request) {
 		boolean unlocked = learner.unlock(request);
 		if (unlocked)
 			System.out.println(request.getLockId() + " has been unlocked as requested by client "
-												   + request.getClientID());
+												   + request.getClientId().getClientAddress());
 		else
 			System.out.println("Unlocking failed.");
 		// What to do next if unlocking failed?????

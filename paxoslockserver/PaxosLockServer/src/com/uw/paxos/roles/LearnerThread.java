@@ -1,10 +1,14 @@
 package com.uw.paxos.roles;
 
 import java.io.IOException;
+
 import com.uw.paxos.connection.Request;
 import com.uw.paxos.connection.Server;
 import com.uw.paxos.connection.UDPServer;
 import com.uw.paxos.locks.DistributedLocks;
+import com.uw.paxos.locks.Lock;
+import com.uw.paxos.messages.PaxosMessage;
+import com.uw.paxos.messages.PaxosMessageType;
 import com.uw.paxos.utils.Utils;
 
 /**
@@ -31,10 +35,22 @@ public class LearnerThread extends StoppableLoopThread {
 	
 	@Override
     public void doProcessing() {
+		// Change here to receive multicasts from Proposers
 		Request request = server.receiveRequest();
 		
 		if (request != null) {
-	    	Utils.logMessage(this.getClass().getSimpleName() + " received command: " + request.getRequestData());
+	    	Utils.logMessage(this.getClass().getSimpleName() + " received command: " + request.getMessage());
+	    	PaxosMessage paxosMessage = PaxosMessage.fromString(request.getMessage());
+			
+			Lock lock = locks.getLock(paxosMessage.getLockId());
+			
+			if (paxosMessage.getMessageType() == PaxosMessageType.LOCK_ACQUIRE) {
+				lock.acquire(paxosMessage.getClientId());
+			}
+			
+			if (paxosMessage.getMessageType() == PaxosMessageType.LOCK_RELEASE) {
+				lock.release(paxosMessage.getClientId());
+			}
 		}	    
     }
 }
