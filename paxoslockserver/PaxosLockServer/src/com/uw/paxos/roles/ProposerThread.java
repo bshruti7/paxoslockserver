@@ -1,13 +1,10 @@
 package com.uw.paxos.roles;
 
-import java.awt.TrayIcon.MessageType;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.uw.paxos.Proposer;
-import com.uw.paxos.connection.Request;
+import com.uw.paxos.connection.Response;
 import com.uw.paxos.connection.Server;
 import com.uw.paxos.connection.UDPServer;
 import com.uw.paxos.locks.DistributedLocks;
@@ -15,7 +12,6 @@ import com.uw.paxos.locks.Lock;
 import com.uw.paxos.messages.ClientId;
 import com.uw.paxos.messages.ClientMessage;
 import com.uw.paxos.messages.ClientMessageType;
-import com.uw.paxos.messages.PaxosMessage;
 import com.uw.paxos.utils.Utils;
 
 /**
@@ -60,42 +56,81 @@ public class ProposerThread extends StoppableLoopThread {
 		}
 		
 		if (message.getMessageType() != ClientMessageType.DUMMY_REQUEST) {
-			Utils.logMessage(this.getClass().getSimpleName() + " started working on client request : " + message.getMessageType());
+			Utils.logMessage(this.getClass().getSimpleName() + " request picked up from request queue : " + message.toString());
 	    	processRequest(message);
 		}
     }
 	
 	private void processRequest(ClientMessage clientMessage) {
-	
 		// Valid Request, process accordingly
 		if (clientMessage.getMessageType() == ClientMessageType.UNLOCK_REQUEST) {
-			// Check if lock is acquired by this client
+			// Check if lock is acquired and is acquired by this client
 			Lock lock = locks.getLock(clientMessage.getLockId());
-			if (lock.getAcquiredBy().equals(clientMessage.getClientId())) {
-			    // Multicast to Learners with unlock command.
+			
+			if (lock.isAcquired() && lock.getAcquiredBy().equals(clientMessage.getClientId())) {
+				lock.release(clientMessage.getClientId()); // This code will go to learner
+				
+				// Multicast to Learners with unlock command
+				sendSuccess(clientMessage, false);
 				
 				// Check for other lock in the lock queue
-				ClientId clientId = lock.getNextWaitingClient();
+				// ClientId clientId = lock.getNextWaitingClient();
 				
-				if (clientId != null) {
+				//if (clientId != null) {
 					// Run Paxos on clientId as the lock is available now
-				}
+				//}
+			} else {
+				sendFailure(clientMessage);
 			}
-		}
-		else{//The client has sent out a lock request .
+		} else {
+			//The client has sent out a lock request.
 			//Check if the requested lock is  available in the distributed lock table.
 			Lock lock = locks.getLock(clientMessage.getLockId());
+			
 			if(lock.isAcquired()){
-				//Add to  lock waiting queue.
+				// Add to lock waiting queue and conclude this request. 
+				// This client's request will be taken care of when client 
+				// holding this lock unlocks.
 				lock.addWaitingClient(clientMessage.getClientId());
-				//What next???
 			}
-			else{
+			else {
 				// Parse and act on request
-				 Proposer proposer = new Proposer();
-				 proposalNumber = proposalNumber+1;
-				 proposer.startPaxosAlgorithm(clientMessage,proposalNumber);
+				// Proposer proposer = new Proposer();
+				// proposalNumber = proposalNumber+1;
+				// proposer.startPaxosAlgorithm(clientMessage,proposalNumber);
+				
+				lock.acquire(clientMessage.getClientId()); // This code will go to learner
+				
+				sendSuccess(clientMessage, true);
 			}
 		}
+	}
+	
+	private void sendSuccess(ClientMessage clientMessage, boolean locked) {
+		ClientMessage confirmationMessage = new ClientMessage();
+		confirmationMessage.setLockId(clientMessage.getLockId());
+		if (locked) {
+			confirmationMessage.setMessageType(ClientMessageType.LOCK_GRANTED);
+		} else {
+			confirmationMessage.setMessageType(ClientMessageType.LOCK_RELEASED);
+		}
+		
+		Response response = new Response();
+		response.setReceiverIpAddress(clientMessage.getClientId().getClientAddress());
+		response.setReceiverPort(clientMessage.getClientId().getClientPort());
+		response.setMessage(confirmationMessage.toString());
+		server.sendResponse(response);
+	}
+	
+	private void sendFailure(ClientMessage clientMessage) {
+		ClientMessage confirmationMessage = new ClientMessage();
+		confirmationMessage.setLockId(clientMessage.getLockId());
+		confirmationMessage.setMessageType(ClientMessageType.REQUEST_DENIED);
+		
+		Response response = new Response();
+		response.setReceiverIpAddress(clientMessage.getClientId().getClientAddress());
+		response.setReceiverPort(clientMessage.getClientId().getClientPort());
+		response.setMessage(confirmationMessage.toString());
+		server.sendResponse(response);
 	}
 }

@@ -75,19 +75,11 @@ public class AcceptorThread extends StoppableLoopThread {
 		        		inPacket.getPort());
 		        		socket.send(reply);
 		        		
-		        
-		        
-		        
-		        
-		        
 		      //}
 		    } catch (IOException ioe) {
 		      System.out.println(ioe);
 		    }
-		}
-		
-
-		    
+		}		    
 //    }
 //}
 	

@@ -1,21 +1,11 @@
-package com.uw.paxos;
+package com.uw.paxos.messages;
 
 import com.google.gson.Gson;
 
 public class ClientMessage {
 
 	private ClientMessageType messageType;
-	private ClientId clientId;
 	private int lockId;
-
-	
-	public ClientMessage(ClientMessageType messageType, ClientId clientId,
-			int lockId) {
-		super();
-		this.messageType = messageType;
-		this.clientId = clientId;
-		this.lockId = lockId;
-	}
 
 	/**
 	 * Deserialize this Java object from json string
@@ -45,14 +35,6 @@ public class ClientMessage {
 		this.messageType = messageType;
 	}
 	
-	public ClientId getClientId() {
-		return clientId;
-	}
-
-	public void setClientId(ClientId clientId) {
-		this.clientId = clientId;
-	}
-
 	public int getLockId() {
 		return lockId;
 	}

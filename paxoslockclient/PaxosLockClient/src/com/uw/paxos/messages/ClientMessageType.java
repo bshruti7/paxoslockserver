@@ -6,5 +6,4 @@ public enum ClientMessageType {
 	LOCK_GRANTED, // Confirmation that lock is granted to client
 	LOCK_RELEASED, // Confirmation that lock is released
 	REQUEST_DENIED, // Denied request
-	DUMMY_REQUEST // Dummy request to wake up Proposer thread from queue after every 15 sec.
 }

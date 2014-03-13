@@ -5,8 +5,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-
 import com.uw.paxos.connection.Server;
 import com.uw.paxos.utils.Utils;
 
@@ -40,9 +38,8 @@ public class UDPServer extends Server {
 			byte []responseBytes = new byte[p.getLength()];
 			System.arraycopy(p.getData(), p.getOffset(), responseBytes, 0, p.getLength());
 			
-			logMessage("Client Request: " + Arrays.toString(responseBytes));
 			String requestDataAsString = new String(responseBytes, defaultCharset);
-			logMessage("Client Request as String: " + requestDataAsString);
+			// logMessage("Request as String: " + requestDataAsString);
 			
 			request = new Request();
 			request.setSenderIpAddress(p.getAddress());
@@ -60,7 +57,7 @@ public class UDPServer extends Server {
 	@Override
     public void sendResponse(Response response) {
 		
-		logMessage("Response: " + response.getMessage());
+		// logMessage("Response: " + response.getMessage());
 		byte []responseBuffer = response.getMessage().getBytes(defaultCharset);
 		
 		DatagramPacket p = new DatagramPacket(responseBuffer, responseBuffer.length, response.getReceiverIpAddress(), response.getReceiverPort());
