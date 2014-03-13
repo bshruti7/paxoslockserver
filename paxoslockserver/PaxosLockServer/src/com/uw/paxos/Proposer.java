@@ -9,6 +9,7 @@ import java.net.UnknownHostException;
 
 import com.uw.paxos.connection.Multicast;
 import com.uw.paxos.connection.Request;
+
 import com.uw.paxos.messages.ClientMessage;
 import com.uw.paxos.messages.PaxosMessage;
 import com.uw.paxos.messages.PaxosMessageType;
@@ -58,7 +59,7 @@ public class Proposer {
 	 * @param request
 	 * 
 	 */
-/*	public void processClientRequest(PaxosMessage request) {
+	/*	public void processClientRequest(PaxosMessage request) {
 		// if unlock request notify learner
 		if (request.getMessageType().equals(PaxosMessageType.LOCK_ACQUIRE))
 			handleUnlockRequest(request);
@@ -75,7 +76,10 @@ public class Proposer {
 	 * 
 	 * @param request
 	 */
+
 	/*private void handleLockRequest(PaxosMessage request) {
+
+	private void handleLockRequest(PaxosMessage request) {
 		boolean isLockAvailable = learner.isLockGranted(request);
 		if (!isLockAvailable) { // if lock not available then we send reply to
 								// client informing it about it.
@@ -84,7 +88,7 @@ public class Proposer {
 			//startPaxosAlgorithm(request);
 		}
 	}
-*/
+	 */
 	
 	/**
 	 * This method initiates the paxos algorithm to get concensus if the requested lock can be granted to the
@@ -169,7 +173,8 @@ public class Proposer {
 	 * sent in request are valid(i.e client is not asking to release a lock it does not hold)
 	 * @param request
 	 */
-/*	private void handleUnlockRequest(PaxosMessage request) {
+	/* private void handleUnlockRequest(PaxosMessage request) {
+
 		boolean unlocked = learner.unlock(request);
 		if (unlocked)
 			System.out.println(request.getLockId() + " has been unlocked as requested by client "

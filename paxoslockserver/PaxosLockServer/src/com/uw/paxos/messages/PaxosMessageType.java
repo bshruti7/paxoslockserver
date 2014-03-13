@@ -9,5 +9,4 @@ public enum PaxosMessageType {
 	NACK_ON_ACCEPT, //Acceptors NACK the Accept message
 	LOCK_ACQUIRE, // Proposer to Learner (multicast)
 	LOCK_RELEASE // Proposer to Learner (multicast)
-	
 }

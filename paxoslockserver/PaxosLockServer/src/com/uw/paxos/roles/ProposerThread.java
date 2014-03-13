@@ -66,7 +66,7 @@ public class ProposerThread extends StoppableLoopThread {
     }
 	
 	private void processRequest(ClientMessage clientMessage) {
-		
+	
 		// Valid Request, process accordingly
 		if (clientMessage.getMessageType() == ClientMessageType.UNLOCK_REQUEST) {
 			// Check if lock is acquired by this client
