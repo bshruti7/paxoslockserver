@@ -68,7 +68,7 @@ public class UDPClient {
 			
 			logMessage("Response from Server as String: " + stringResponse);
 			
-			// Create Java response message
+			// Create Java response
 			response.setMessage(stringResponse);
 			response.setServerIpAddress(p.getAddress());
 			response.setServerPort(p.getPort());

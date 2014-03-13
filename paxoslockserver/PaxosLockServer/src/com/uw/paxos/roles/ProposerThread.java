@@ -56,7 +56,7 @@ public class ProposerThread extends StoppableLoopThread {
 		}
 		
 		if (message.getMessageType() != ClientMessageType.DUMMY_REQUEST) {
-			Utils.logMessage(this.getClass().getSimpleName() + " request picked up from request queue : " + message.toString());
+			Utils.logMessage(this.getClass().getSimpleName() + " picked up request from queue : " + message.toString());
 	    	processRequest(message);
 		}
     }

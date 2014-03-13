@@ -23,7 +23,7 @@ public class PaxosClientMain {
 	}
 
 	public static int getRandomLockID(){
-		//Randomly generate lock number between 1 and 10
+		//Randomly generate lock number between 0 and 9, both inclusive
 		int lockID=(int) (Math.random()*10);
 		return lockID;
 	}

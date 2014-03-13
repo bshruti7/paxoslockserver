@@ -17,7 +17,6 @@ public class LockClient {
 	private InetAddress serverAddress;
 	private int serverPort;
 	
-	
 	public LockClient(String hostname, int port) {
 		udpClient = new UDPClient();
 		udpClient.connect();
@@ -68,7 +67,7 @@ public class LockClient {
 		Response response = udpClient.receiveResponse();
 		ClientMessage receivedMessage = ClientMessage.fromString(response.getMessage());
 		
-		// Verify that lock request was successful
+		// Verify that lock release was successful
 		if (receivedMessage.getMessageType() == ClientMessageType.LOCK_RELEASED) {
 			return true;
 		}
