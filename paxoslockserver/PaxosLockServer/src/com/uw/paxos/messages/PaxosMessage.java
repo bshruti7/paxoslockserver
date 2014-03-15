@@ -1,12 +1,10 @@
 package com.uw.paxos.messages;
 
 import com.google.gson.Gson;
-
-
  
 /**
  * 
- * This class stores the details from the client request like lockId,clientId.
+ * This class stores the details from the client request like lockId, clientId.
  * A client request will have only the lockId and the clientId. The server code adds the
  * proposerId and the requestType details to the request.
  *
@@ -14,14 +12,12 @@ import com.google.gson.Gson;
  *
  */
 public class PaxosMessage {
-
 	private PaxosMessageType messageType;
 	private ClientId clientId;
 	private String proposerId;
 	private int lockId;
 	private int highestProposalNumberSeen;
 	private int proposalNumber;
-	
 	
 	/**
 	 * Deserialize this Java object from json string

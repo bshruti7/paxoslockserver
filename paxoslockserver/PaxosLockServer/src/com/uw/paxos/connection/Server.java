@@ -12,7 +12,7 @@ import com.uw.paxos.utils.*;
 public abstract class Server {
 	private final int port;
 	
-	protected Server(int port) throws IOException {
+	protected Server(int port) {
 		this.port = port;
 	}
 

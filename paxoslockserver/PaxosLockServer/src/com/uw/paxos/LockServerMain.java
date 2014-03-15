@@ -1,11 +1,8 @@
 package com.uw.paxos;
 import java.io.*;
-import java.net.InetAddress;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import com.google.gson.Gson;
-import com.uw.paxos.connection.Request;
 import com.uw.paxos.locks.DistributedLocks;
 import com.uw.paxos.messages.ClientMessage;
 import com.uw.paxos.roles.AcceptorThread;
@@ -18,18 +15,18 @@ import com.uw.paxos.roles.StoppableLoopThread;
  * @author Shruti
  *
  */
-public class LockServer {
+public class LockServerMain {
 	
 	private DistributedLocks locksTable; 
 	private BlockingQueue<ClientMessage> clientRequestQueue;
 	
-	public LockServer() {
+	public LockServerMain() {
 		locksTable = new DistributedLocks();
 		clientRequestQueue = new LinkedBlockingQueue<>();
 	}
 
 	public static void main(String args[]) throws Exception{
-		LockServer lockServer = new LockServer();
+		LockServerMain lockServer = new LockServerMain();
 		lockServer.go();
 	}
 	
@@ -42,8 +39,8 @@ public class LockServer {
 		// TODO: Extract port number from arguments to this process
 		threads[0] = new ClientRequestAcceptorThread(clientRequestQueue, 6000);
 		threads[1] = new ProposerThread(clientRequestQueue, locksTable, 6001);
-		threads[2] = new AcceptorThread(6002);
-		threads[3] = new LearnerThread(locksTable, 6003);
+		threads[2] = new AcceptorThread();
+		threads[3] = new LearnerThread(locksTable);
 		
 		// Start threads with different roles
 		for (Thread thread : threads) {
@@ -51,11 +48,6 @@ public class LockServer {
         }
 		
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		
-		Gson gson = new Gson();
-		Request r = new Request();
-		String jsonString = gson.toJson(r);
-		Request recovered = gson.fromJson(jsonString, Request.class);		
 		
 		while (!shutdownRequested) {
 			String command = br.readLine();

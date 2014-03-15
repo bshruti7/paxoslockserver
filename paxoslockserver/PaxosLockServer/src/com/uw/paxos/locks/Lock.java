@@ -29,12 +29,18 @@ public class Lock {
 	}
 	
 	public void acquire(ClientId clientId) {
-		assert(!isAcquired());
+		if (isAcquired()) {
+			throw new RuntimeException("Trying to acquire a already acquired lock." 
+					+ clientId.getClientAddress() + ":"  + clientId.getClientPort()); // Verify that lock was held by this client
+		}
 		acquiredBy = clientId;
 	}
 	
 	public ClientId release(ClientId clientId) {
-		assert(clientId.equals(getAcquiredBy())); // Verify that lock was held by this client
+		if (!isAcquired() || !clientId.equals(getAcquiredBy())) {
+			throw new RuntimeException("Trying to release a lock which has not been acquired by the client " 
+					+ clientId.getClientAddress() + ":"  + clientId.getClientPort()); // Verify that lock was held by this client
+		}
 		
 		ClientId lastAcquiredBy = acquiredBy;
 		acquiredBy = null;
@@ -43,6 +49,10 @@ public class Lock {
 	}
 	
 	public void addWaitingClient(ClientId clientId) {
+		if (isAcquired() && clientId.equals(getAcquiredBy())) {
+			throw new RuntimeException("Unable to add client to the queue as client already has the lock "
+					+ clientId.getClientAddress() + ":"  + clientId.getClientPort()); // Verify that lock was held by this client
+		}
 		clientsWaitingOnLock.add(clientId);
 	}
 

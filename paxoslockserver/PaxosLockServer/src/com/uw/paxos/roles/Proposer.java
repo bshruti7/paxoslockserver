@@ -1,14 +1,4 @@
-package com.uw.paxos;
-
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-
-import com.uw.paxos.connection.Multicast;
-import com.uw.paxos.connection.Request;
+package com.uw.paxos.roles;
 
 import com.uw.paxos.messages.ClientMessage;
 import com.uw.paxos.messages.PaxosMessage;
@@ -45,10 +35,8 @@ public class Proposer {
 //	private Learner learner ;
 ////	private Request request;
 	PaxosMessage paxosMessage ;
-	Multicast multicast;
 	public Proposer(){
 		
-		Multicast multicast = new Multicast();
 	}
 
 	
@@ -162,7 +150,7 @@ public class Proposer {
 	  PaxosMessage paxosMessage =  new PaxosMessage();
 	  paxosMessage.setProposalNumber(proposalNumber);
 	  paxosMessage.setMessageType(PaxosMessageType.PREPARE);
-	  multicast.sendMulticast(paxosMessage);
+	  // multicast.sendMulticast(paxosMessage);
 	}
 	
 	

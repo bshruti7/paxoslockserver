@@ -1,11 +1,10 @@
 package com.uw.paxos.roles;
 
-import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 
 import com.uw.paxos.connection.Request;
 import com.uw.paxos.connection.Server;
-import com.uw.paxos.connection.UDPServer;
+import com.uw.paxos.connection.UDPUnicastServer;
 import com.uw.paxos.messages.ClientId;
 import com.uw.paxos.messages.ClientMessage;
 import com.uw.paxos.messages.ClientMessageType;
@@ -31,11 +30,7 @@ public class ClientRequestAcceptorThread extends StoppableLoopThread {
 	
 	public ClientRequestAcceptorThread(BlockingQueue<ClientMessage> clientRequestQueue, int portNumber) {
 		this.clientRequestQueue = clientRequestQueue;
-		try {
-	        server = new UDPServer(portNumber);
-        } catch (IOException ex) {
-	        Utils.logError("Unable to bind to port : " + portNumber + ". Exception: " + ex.getMessage());
-        }
+	    this.server = new UDPUnicastServer(portNumber);
 	}
 	
 	@Override

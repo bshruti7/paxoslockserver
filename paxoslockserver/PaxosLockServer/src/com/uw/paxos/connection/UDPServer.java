@@ -5,6 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
+
 import com.uw.paxos.connection.Server;
 import com.uw.paxos.utils.Utils;
 
@@ -13,18 +14,15 @@ import com.uw.paxos.utils.Utils;
  * @author Samiksha Sharma
  *
  */
-public class UDPServer extends Server {
+public abstract class UDPServer extends Server {
 	private static int MAX_BUFFER_SIZE = 1024;
-	public static int TIMEOUT_IN_MILLIS = 15000;
 	private static Charset defaultCharset = Charset.forName("US-ASCII");
 	
-	private DatagramSocket serverSocket;
+	protected static final int TIMEOUT_IN_MILLIS = 15000;
+	protected DatagramSocket serverSocket;
 	
-	public UDPServer(int port) throws IOException {
+	protected UDPServer(int port) {
 		super(port);
-		this.serverSocket = new DatagramSocket(super.getPort());
-		this.serverSocket.setSoTimeout(TIMEOUT_IN_MILLIS);
-        Utils.logMessage("Server bound to UDP port: " + this.getPort());
 	}
 	
 	@Override
@@ -48,7 +46,7 @@ public class UDPServer extends Server {
         } catch (SocketTimeoutException ex) {
         	// Do nothing
         } catch (IOException ex) {
-        	ex.printStackTrace();
+        	Utils.logError("Exception occured while reading message. Error : " + ex.getMessage());
         }
 		
 		return request;

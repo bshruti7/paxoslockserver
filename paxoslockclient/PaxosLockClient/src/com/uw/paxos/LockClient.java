@@ -31,7 +31,7 @@ public class LockClient {
 	
 	public boolean acquire(int lockId) {
 		ClientMessage clientMessage = new ClientMessage();
-		clientMessage.setMessageType(ClientMessageType.LOCK_REQUEST);
+		clientMessage.setMessageType(ClientMessageType.LOCK_ACQUIRE_REQUEST);
 		clientMessage.setLockId(lockId);
 		
 		// Construct request object
@@ -54,7 +54,7 @@ public class LockClient {
 	
 	public boolean release(int lockId) {
 		ClientMessage clientMessage = new ClientMessage();
-		clientMessage.setMessageType(ClientMessageType.UNLOCK_REQUEST);
+		clientMessage.setMessageType(ClientMessageType.LOCK_RELEASE_REQUEST);
 		clientMessage.setLockId(lockId);
 		
 		// Construct request object
