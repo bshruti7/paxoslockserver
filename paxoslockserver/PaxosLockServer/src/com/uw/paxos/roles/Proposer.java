@@ -1,5 +1,11 @@
 package com.uw.paxos.roles;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+import com.uw.paxos.connection.Response;
+import com.uw.paxos.connection.Server;
+import com.uw.paxos.connection.UDPUnicastServer;
 import com.uw.paxos.messages.ClientMessage;
 import com.uw.paxos.messages.PaxosMessage;
 import com.uw.paxos.messages.PaxosMessageType;
@@ -29,66 +35,30 @@ import com.uw.paxos.messages.PaxosMessageType;
 //Hoo to handles nack on accept request being rejected.
 
 
-public class Proposer {
+public class Proposer{
 //	private String proposerId;
 //	private int proposalNumber=0; 
 //	private Learner learner ;
 ////	private Request request;
 	PaxosMessage paxosMessage ;
-	public Proposer(){
-		
-	}
-
+	//private Server server2;
 	
-	/**
-	 * Server accepts the request from the client through TCP connection.Server then
-	 * sends the request information to the proposer thread.This method checks if the 
-	 * request is for lock(client wants to obtain some lock) or unlock(release a particular lock) and calls the relevant methods.
-	 * @param request
-	 * 
-	 */
-	/*	public void processClientRequest(PaxosMessage request) {
-		// if unlock request notify learner
-		if (request.getMessageType().equals(PaxosMessageType.LOCK_ACQUIRE))
-			handleUnlockRequest(request);
-		else
-			handleLockRequest(request);
-	}
-	*/
 	
-	/**
-	 * This method performs the paxos algorithm to decide if a lock can or cannot be 
-	 * granted to a requesting client.
-	 * Lock request: Call learner to check if lock available then call method startPaxosAlgorithm 
-	 * If lock already granted then how to handle. Need to check how to handle that case.
-	 * 
-	 * @param request
-	 */
-
-	/*private void handleLockRequest(PaxosMessage request) {
-
-	private void handleLockRequest(PaxosMessage request) {
-		boolean isLockAvailable = learner.isLockGranted(request);
-		if (!isLockAvailable) { // if lock not available then we send reply to
-								// client informing it about it.
-			// code to handle case where lock is already granted.
-		} else {
-			//startPaxosAlgorithm(request);
-		}
-	}
-	 */
 	
-	/**
-	 * This method initiates the paxos algorithm to get concensus if the requested lock can be granted to the
+		/**
+	 * This method initiates the paxos algorithm to get consensus if the requested lock can be granted to the
 	 * requesting client.
+		 * @param server 
+		 * @param server2 
 	 * @param request
+		 * @throws UnknownHostException 
 	 */
-	public void startPaxosAlgorithm(ClientMessage clientMessage, int proposalNumber) {
+	public void startPaxosAlgorithm(ClientMessage clientMessage, int proposalNumber, Server server) throws UnknownHostException {
 		
 		//generate proposalNumber
 		//proposalNumber = proposalNumber + 1 ;
-		
-		sendPrepareMessage(proposalNumber);
+		System.out.println("The proposal number currently is "+proposalNumber);
+		sendPrepareMessageToAcceptor(proposalNumber,clientMessage,server);
 		
 		//How to simulate this condition where this proposer gets replies from all the acceptors and then checks if quorum obtained or not?
 		//especially from the connectivity point of view. Not able to think of right way to capture promises and then check quorum
@@ -127,13 +97,9 @@ public class Proposer {
 		// Send out a multicast message to all acceptor with an AcceptMessage
 		//AcceptMessage acceptMessage = new AcceptMessage(proposerId, proposalNumber, "");
 		
-		
+	
 	}
 	
-	
-	
-	
-
 	/**
 	 * This method receives promises or NACKS from the acceptors and checks if a quorm is achieved.
 	 */
@@ -144,32 +110,41 @@ public class Proposer {
 
 	/**
 	 * Multicasts prepare messages to all the acceptors. 
+	 * @param clientMessage 
+	 * @param clientMessage 
+	 * @param server 
+	 * @throws UnknownHostException 
 	 * 
 	 */
-	private void sendPrepareMessage(int proposalNumber) {
+	private void sendPrepareMessageToAcceptor(int proposalNumber, ClientMessage clientMessage, Server server) throws UnknownHostException {
 	  PaxosMessage paxosMessage =  new PaxosMessage();
 	  paxosMessage.setProposalNumber(proposalNumber);
 	  paxosMessage.setMessageType(PaxosMessageType.PREPARE);
+	  paxosMessage.setClientId(clientMessage.getClientId());
+	  paxosMessage.setLockId(clientMessage.getLockId());
+	  paxosMessage.setProposerId(InetAddress.getLocalHost());
+	  Response response=generateResponseForAcceptor(paxosMessage);
+	  System.out.println(" Proposer has to send to Acceptor at  " + response.getReceiverIpAddress()+","+response.getReceiverPort()+","+response.getMessage());
+	  server.sendResponse(response);
+	 // Response response = generateResponseForLearnerFromPaxosMessage(paxosMessage);
+	  //server2.sendResponse(response);
 	  // multicast.sendMulticast(paxosMessage);
+	}
+
+
+	private Response generateResponseForAcceptor(PaxosMessage paxosMessage2) {
+		// TODO Auto-generated method stub
+		
+		Response response = new Response();
+		response.setReceiverIpAddress(AcceptorThread.ACCEPTOR_GROUP_ADDRESS);
+		response.setReceiverPort(AcceptorThread.ACCEPTOR_GROUP_PORT);
+		response.setMessage(paxosMessage2.toString());
+		
+		System.out.println(" resposne has all these " + response.getReceiverIpAddress()+","+response.getReceiverPort()+","+response.getMessage());
+	    return response;
 	}
 	
 	
 	
-	/**
-	 * This method handles the unlock request from the client. It calls the learner to
-	 * unlock the requested lock.Learner code will first validate if the lockid and clientId 
-	 * sent in request are valid(i.e client is not asking to release a lock it does not hold)
-	 * @param request
-	 */
-	/* private void handleUnlockRequest(PaxosMessage request) {
-
-		boolean unlocked = learner.unlock(request);
-		if (unlocked)
-			System.out.println(request.getLockId() + " has been unlocked as requested by client "
-												   + request.getClientId().getClientAddress());
-		else
-			System.out.println("Unlocking failed.");
-		// What to do next if unlocking failed?????
-
-	}*/
+	
 }

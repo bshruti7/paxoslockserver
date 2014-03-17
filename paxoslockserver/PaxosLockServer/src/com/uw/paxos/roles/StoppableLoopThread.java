@@ -1,5 +1,7 @@
 package com.uw.paxos.roles;
 
+import java.net.UnknownHostException;
+
 import com.uw.paxos.utils.Utils;
 
 /**
@@ -32,14 +34,20 @@ public abstract class StoppableLoopThread extends Thread{
 	
 	/**
 	 * Function where processing is done.
+	 * @throws UnknownHostException 
 	 */
-	public abstract void doProcessing();
+	public abstract void doProcessing() throws UnknownHostException;
 
 	@Override
     public void run() {
 		Utils.logMessage(this.getClass().getSimpleName() + " started.");
 	    while (!shutdownRequested) {
-	    	doProcessing();
+	    	try {
+				doProcessing();
+			} catch (UnknownHostException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 	    }
 	    Utils.logMessage(this.getClass().getSimpleName() + " stopped.");
     }

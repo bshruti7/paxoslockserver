@@ -1,5 +1,6 @@
 package com.uw.paxos.roles;
 
+import java.net.UnknownHostException;
 import java.util.concurrent.BlockingQueue;
 
 import com.uw.paxos.connection.Request;
@@ -30,17 +31,19 @@ public class ProposerThread extends StoppableLoopThread {
 	private BlockingQueue<ClientMessage> clientRequestQueue;
 	private DistributedLocks locks;
 	private Server server;
-	private int proposalNumber;
+	protected int proposalNumber;
 	private int proposalID;
 	
 	public ProposerThread(BlockingQueue<ClientMessage> clientRequestQueue, DistributedLocks locks, int portNumber) {
 		this.locks = locks;
 		this.clientRequestQueue = clientRequestQueue;
         this.server = new UDPUnicastServer(portNumber);
+        this.proposalNumber=0;
+      //  this.proposalID = this.get
 	}
 	
 	@Override
-    public void doProcessing() {
+    public void doProcessing() throws UnknownHostException {
 		ClientMessage message = null;
 		try {
 			// Blocking call until an element is available in the queue.
@@ -57,7 +60,7 @@ public class ProposerThread extends StoppableLoopThread {
 		}
     }
 	
-	private void processRequest(ClientMessage clientMessage) {
+	private void processRequest(ClientMessage clientMessage) throws UnknownHostException {
 		// Valid Request, process accordingly
 		if (clientMessage.getMessageType() == ClientMessageType.LOCK_RELEASE_REQUEST) {
 			// Check if lock is acquired and is acquired by this client
@@ -97,9 +100,10 @@ public class ProposerThread extends StoppableLoopThread {
 			}
 			else {
 				// Parse and act on request (start paxos)
-				// Proposer proposer = new Proposer();
-				// proposalNumber = proposalNumber+1;
-				// proposer.startPaxosAlgorithm(clientMessage,proposalNumber);
+				 Proposer proposer = new Proposer();
+				 proposalNumber = proposalNumber+1;
+				 System.out.println("Client ID is "+clientMessage.getClientId());
+				 proposer.startPaxosAlgorithm(clientMessage,proposalNumber,server);
 				
 				sendPaxosToLearner(clientMessage, PaxosMessageType.LOCK_ACQUIRE ); // This code will go to Proposer.java
 				boolean isSuccessful = checkLearnerResponse();
@@ -165,7 +169,7 @@ public class ProposerThread extends StoppableLoopThread {
 		response.setMessage(paxosMessage.toString());
 	    return response;
     }
-	
+	/*
 	private Response generateResponseForAcceptorFromPaxosMessage(
             PaxosMessage paxosMessage) {
 	    Response response = new Response();
@@ -174,6 +178,7 @@ public class ProposerThread extends StoppableLoopThread {
 		response.setMessage(paxosMessage.toString());
 	    return response;
     }
+    */
 	
 	private Response generateResponseForClientFromClientMessage(
             ClientMessage clientMessage, ClientMessage confirmationMessage) {

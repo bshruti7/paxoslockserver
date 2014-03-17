@@ -1,5 +1,7 @@
 package com.uw.paxos.messages;
 
+import java.net.*;
+
 import com.google.gson.Gson;
  
 /**
@@ -14,7 +16,7 @@ import com.google.gson.Gson;
 public class PaxosMessage {
 	private PaxosMessageType messageType;
 	private ClientId clientId;
-	private String proposerId;
+	private InetAddress proposerId;
 	private int lockId;
 	private int highestProposalNumberSeen;
 	private int proposalNumber;
@@ -64,11 +66,11 @@ public class PaxosMessage {
 		this.clientId = clientId;
 	}
 
-	public String getProposerId() {
+	public InetAddress getProposerId() {
 		return proposerId;
 	}
 
-	public void setProposerId(String proposerId) {
+	public void setProposerId(InetAddress proposerId) {
 		this.proposerId = proposerId;
 	}
 

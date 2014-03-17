@@ -50,6 +50,7 @@ public class LearnerThread extends StoppableLoopThread {
     public void doProcessing() {
 		// Receive request multicasted to learner's group
 		Request request = server.receiveRequest();
+		//System.out.println("Request has "+request.getSenderPort()+","+request.getMessage()+",");
 		
 		if (request != null) {
 	    	Utils.logMessage(this.getClass().getSimpleName() + " received multicast message : " + request.getMessage());
