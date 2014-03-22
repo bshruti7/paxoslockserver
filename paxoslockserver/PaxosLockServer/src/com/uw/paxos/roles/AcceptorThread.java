@@ -8,7 +8,6 @@ import com.uw.paxos.connection.Response;
 import com.uw.paxos.connection.Server;
 
 import com.uw.paxos.connection.UDPMulticastServer;
-
 import com.uw.paxos.messages.PaxosMessage;
 import com.uw.paxos.messages.PaxosMessageType;
 import com.uw.paxos.utils.Utils;
@@ -53,7 +52,6 @@ public class AcceptorThread extends StoppableLoopThread {
 		try {
 			Thread.sleep(3000);
 		} catch (InterruptedException e) {
-			
 			e.printStackTrace();
 		}
 		
@@ -80,7 +78,6 @@ public class AcceptorThread extends StoppableLoopThread {
 				System.out.println("creating the nack message...");
 				createNackForProposer(request, paxosMessage);
 			}
-		
 		}
 		
 		else{
@@ -89,10 +86,8 @@ public class AcceptorThread extends StoppableLoopThread {
 	}
 	
 	
-	
-	 private void createNackForProposer(Request request,
+    private void createNackForProposer(Request request,
 			PaxosMessage paxosMessage) {
-		 	
 		 PaxosMessage confirmationMessage = new PaxosMessage();
 		    confirmationMessage.setClientId(paxosMessage.getClientId());
 		    confirmationMessage.setLockId(paxosMessage.getLockId());
@@ -103,31 +98,29 @@ public class AcceptorThread extends StoppableLoopThread {
 		    responseFromAcceptor.setReceiverIpAddress(request.getSenderIpAddress());
 		    responseFromAcceptor.setReceiverPort(request.getSenderPort());
 		    server.sendResponse(responseFromAcceptor);
-		    
-		
 	}
 
 
-	private void createPromiseForProposer(Request request,PaxosMessage paxosMessage) {
+	private Response createResponseForProposer(Request request,
+            PaxosMessage paxosMessage, PaxosMessageType paxosMessageType) {
 	    // Send confirmation to the sender
 	    PaxosMessage confirmationMessage = new PaxosMessage();
 	    confirmationMessage.setClientId(paxosMessage.getClientId());
 	    confirmationMessage.setLockId(paxosMessage.getLockId());
-	    confirmationMessage.setMessageType(PaxosMessageType.PROMISE);
-	    confirmationMessage.setProposalNumber(highestProposalNumberSeenByAcceptor);	
-	   /*
-	    Response responseFromAcceptor = new Response();
-	    responseFromAcceptor.setMessage(paxosMessage.toString());
-	    responseFromAcceptor.setReceiverIpAddress(request.getSenderIpAddress());
-	    responseFromAcceptor.setReceiverPort(request.getSenderPort());
-	   */
+	    confirmationMessage.setMessageType(paxosMessageType);
+		confirmationMessage.setProposalNumber(highestProposalNumberSeenByAcceptor);	
+
 	    Response responseFromAcceptor = new Response();
 	    responseFromAcceptor.setMessage(confirmationMessage.toString());
 	    responseFromAcceptor.setReceiverIpAddress(request.getSenderIpAddress());
 	    responseFromAcceptor.setReceiverPort(request.getSenderPort());
-	    //UDPClient udpClient=new UDPClient();
-	   server.sendResponse(responseFromAcceptor);
+        server.sendResponse(responseFromAcceptor);
+	    
+	    // Construct request
+	    Response response = new Response();
+	    response.setMessage(confirmationMessage.toString());
+	    response.setReceiverIpAddress(request.getSenderIpAddress());
+	    response.setReceiverPort(request.getSenderPort());
+	    return response;
     }
-    
-	 
 }

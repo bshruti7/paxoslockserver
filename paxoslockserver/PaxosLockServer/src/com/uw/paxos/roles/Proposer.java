@@ -139,7 +139,6 @@ public class Proposer{
 	  paxosMessage.setMessageType(PaxosMessageType.PREPARE);
 	  paxosMessage.setClientId(clientMessage.getClientId());
 	  paxosMessage.setLockId(clientMessage.getLockId());
-	  paxosMessage.setProposerId(InetAddress.getLocalHost());
 	  Response response=generateResponseForAcceptor(paxosMessage);
 	  System.out.println(" Proposer has to send to Acceptor at  " + response.getReceiverIpAddress()+","+response.getReceiverPort()+","+response.getMessage());
 	  server.sendResponse(response);

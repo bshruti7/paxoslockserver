@@ -53,9 +53,9 @@ public class UDPMulticastServer extends UDPServer {
 	protected void shutdownServer() throws IOException {
 		// If socket is not null and not closed
 		if (serverSocket != null && !serverSocket.isClosed()) {
-			// Leave the multicast group
-			serverSocket.close();
+			// Leave the multicast group and close connection
 			leaveMulticastGroup();
+			serverSocket.close();
 		}
 		
 		super.shutdownServer();
