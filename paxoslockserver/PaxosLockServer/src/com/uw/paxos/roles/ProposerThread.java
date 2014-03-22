@@ -1,5 +1,6 @@
 package com.uw.paxos.roles;
 
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.BlockingQueue;
 
@@ -32,7 +33,7 @@ public class ProposerThread extends StoppableLoopThread {
 	private DistributedLocks locks;
 	private Server server;
 	protected int proposalNumber;
-	private int proposalID;
+	
 	
 	public ProposerThread(BlockingQueue<ClientMessage> clientRequestQueue, DistributedLocks locks, int portNumber) {
 		this.locks = locks;
@@ -100,12 +101,12 @@ public class ProposerThread extends StoppableLoopThread {
 			}
 			else {
 				// Parse and act on request (start paxos)
-				 Proposer proposer = new Proposer();
+				 //Proposer proposer = new Proposer(server);
 				 proposalNumber = proposalNumber+1;
 				 System.out.println("Client ID is "+clientMessage.getClientId());
-				 proposer.startPaxosAlgorithm(clientMessage,proposalNumber,server);
+				 startPaxosAlgorithm(clientMessage,proposalNumber);
 				
-				sendPaxosToLearner(clientMessage, PaxosMessageType.LOCK_ACQUIRE ); // This code will go to Proposer.java
+				//sendPaxosToLearner(clientMessage, PaxosMessageType.LOCK_ACQUIRE ); // This code will go to Proposer.java
 				boolean isSuccessful = checkLearnerResponse();
 				if (isSuccessful) {
 					sendSuccessToClient(clientMessage, true);
@@ -116,6 +117,106 @@ public class ProposerThread extends StoppableLoopThread {
 			}
 		}
 	}
+public void startPaxosAlgorithm(ClientMessage clientMessage, int proposalNumber) throws UnknownHostException {
+		
+		//generate proposalNumber
+		//proposalNumber = proposalNumber + 1 ;
+		System.out.println("The proposal number currently is "+proposalNumber);
+		sendPrepareMessageToAcceptor(proposalNumber,clientMessage);
+		
+		checkQuorumForAcceptMessages();
+		//How to simulate this condition where this proposer gets replies from all the acceptors and then checks if quorum obtained or not?
+		//especially from the connectivity point of view. Not able to think of right way to capture promises and then check quorum
+		//boolean isQuorumObtained = checkQuoroum();
+		/*if(!isQuorumObtained){//If quorum not obtained what do we do? 
+			//send client the reponse that his rquest cannot be satisfied at this time. Please try later?
+		}
+		else{
+			sendAcceptMessage();
+			boolean isaAcceptedByQuorum = checkQuorumForAcceptMessages();
+			if(isaAcceptedByQuorum)
+				{
+				//learner.lock(request2);
+				}
+			else{
+				//Hoo to handles nack on accept request being rejected.
+					}
+			
+		}
+		*/
+	}
+	
+	
+	/**
+	 * This method checks if a quorum has been achieved for the replies to the accept messages.
+	 */
+	private void checkQuorumForAcceptMessages() {
+		//Check quorum for dummy messages.
+		
+		Request receivedFromAcceptor=new Request();
+		receivedFromAcceptor = server.receiveRequest();		  
+		System.out.println("GOt this from acceptor at proposer:"+receivedFromAcceptor.getMessage());  
+		
+		
+		//return true;
+	}
+
+	
+	/**
+	 * This method generates an accept message and multicasts this message to all the acceptors.
+	 */
+	private void sendAcceptMessage() {
+		// Send out a multicast message to all acceptor with an AcceptMessage
+		//AcceptMessage acceptMessage = new AcceptMessage(proposerId, proposalNumber, "");
+		
+	
+	}
+	
+	/**
+	 * This method receives promises or NACKS from the acceptors and checks if a quorm is achieved.
+	 */
+	private boolean checkQuoroum() {
+		//Code to check quorum
+		return true;
+	}
+
+	/**
+	 * Multicasts prepare messages to all the acceptors. 
+	 * @param clientMessage 
+	 * @param clientMessage 
+	 * @throws UnknownHostException 
+	 * 
+	 */
+	private void sendPrepareMessageToAcceptor(int proposalNumber, ClientMessage clientMessage) throws UnknownHostException {
+	  PaxosMessage paxosMessage =  new PaxosMessage();
+	  paxosMessage.setProposalNumber(proposalNumber);
+	  paxosMessage.setMessageType(PaxosMessageType.PREPARE);
+	  paxosMessage.setClientId(clientMessage.getClientId());
+	  paxosMessage.setLockId(clientMessage.getLockId());
+	  paxosMessage.setProposerId(InetAddress.getLocalHost());
+	  Response response=generateResponseForAcceptor(paxosMessage);
+	  System.out.println(" Proposer has to send to Acceptor at  " + response.getReceiverIpAddress()+","+response.getReceiverPort()+","+response.getMessage());
+	  server.sendResponse(response);
+	 // Response response = generateResponseForLearnerFromPaxosMessage(paxosMessage);
+	  //server2.sendResponse(response);
+	  // multicast.sendMulticast(paxosMessage);
+	  
+	}
+
+
+	private Response generateResponseForAcceptor(PaxosMessage paxosMessage2) {
+		// TODO Auto-generated method stub
+		
+		Response response = new Response();
+		response.setReceiverIpAddress(AcceptorThread.ACCEPTOR_GROUP_ADDRESS);
+		response.setReceiverPort(AcceptorThread.ACCEPTOR_GROUP_PORT);
+		response.setMessage(paxosMessage2.toString());
+		
+		//System.out.println(" response has all these " + response.getReceiverIpAddress()+","+response.getReceiverPort()+","+response.getMessage());
+	    return response;
+	}
+	
+	
 	
 	private void sendPaxosToLearner(ClientMessage clientMessage, PaxosMessageType paxosMessageType) {
 		PaxosMessage paxosMessage = new PaxosMessage();
@@ -126,7 +227,7 @@ public class ProposerThread extends StoppableLoopThread {
 		Response response = generateResponseForLearnerFromPaxosMessage(paxosMessage);
 		server.sendResponse(response);
 	}
-	
+	/*
 	private void sendPaxosToAcceptor(ClientMessage clientMessage, PaxosMessageType paxosMessageType) {
 		PaxosMessage paxosMessage = new PaxosMessage();
 		paxosMessage.setLockId(clientMessage.getLockId());
@@ -136,7 +237,7 @@ public class ProposerThread extends StoppableLoopThread {
 		Response response = generateResponseForLearnerFromPaxosMessage(paxosMessage);
 		server.sendResponse(response);
 	}
-	
+	*/
 	private void sendSuccessToClient(ClientMessage clientMessage, boolean locked) {
 		ClientMessage confirmationMessage = new ClientMessage();
 		confirmationMessage.setLockId(clientMessage.getLockId());

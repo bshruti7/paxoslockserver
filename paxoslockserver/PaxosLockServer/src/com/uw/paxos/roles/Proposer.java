@@ -1,10 +1,14 @@
+//This file is not being used any more
+
 package com.uw.paxos.roles;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import com.uw.paxos.connection.Request;
 import com.uw.paxos.connection.Response;
 import com.uw.paxos.connection.Server;
+import com.uw.paxos.connection.UDPClient;
 import com.uw.paxos.connection.UDPUnicastServer;
 import com.uw.paxos.messages.ClientMessage;
 import com.uw.paxos.messages.PaxosMessage;
@@ -41,10 +45,16 @@ public class Proposer{
 //	private Learner learner ;
 ////	private Request request;
 	PaxosMessage paxosMessage ;
-	//private Server server2;
+	private UDPClient serverListeningForAcceptor;
 	
 	
 	
+		public Proposer(Server serverListeningForAcceptor) {
+		this.serverListeningForAcceptor = new UDPClient();
+		
+	}
+
+
 		/**
 	 * This method initiates the paxos algorithm to get consensus if the requested lock can be granted to the
 	 * requesting client.
@@ -60,6 +70,7 @@ public class Proposer{
 		System.out.println("The proposal number currently is "+proposalNumber);
 		sendPrepareMessageToAcceptor(proposalNumber,clientMessage,server);
 		
+		checkQuorumForAcceptMessages();
 		//How to simulate this condition where this proposer gets replies from all the acceptors and then checks if quorum obtained or not?
 		//especially from the connectivity point of view. Not able to think of right way to capture promises and then check quorum
 		boolean isQuorumObtained = checkQuoroum();
@@ -86,6 +97,12 @@ public class Proposer{
 	 */
 	private boolean checkQuorumForAcceptMessages() {
 		//Check quorum for dummy messages.
+		
+		Response receivedFromAcceptor=new Response();
+		receivedFromAcceptor = serverListeningForAcceptor.receiveResponse();		  
+		System.out.println("GOt this from acceptor at proposer:"+receivedFromAcceptor);  
+		
+		
 		return true;
 	}
 
@@ -129,6 +146,7 @@ public class Proposer{
 	 // Response response = generateResponseForLearnerFromPaxosMessage(paxosMessage);
 	  //server2.sendResponse(response);
 	  // multicast.sendMulticast(paxosMessage);
+	  
 	}
 
 
