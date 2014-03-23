@@ -8,8 +8,8 @@ import com.uw.paxos.connection.Response;
 import com.uw.paxos.connection.Server;
 
 import com.uw.paxos.connection.UDPMulticastServer;
-import com.uw.paxos.messages.PaxosMessage;
-import com.uw.paxos.messages.PaxosMessageType;
+import com.uw.paxos.messages.ProposerAcceptorMessage;
+import com.uw.paxos.messages.ProposerAcceptorMessageType;
 import com.uw.paxos.utils.Utils;
 
 /**
@@ -28,7 +28,7 @@ public class AcceptorThread extends StoppableLoopThread {
 	public static InetAddress ACCEPTOR_GROUP_ADDRESS;
 	
 	private Server server;
-	private int highestProposalNumberSeenByAcceptor=0;
+	private int highestProposalNumberSeen=0;
 	
 	// Static block to initialize static objects
 	static {
@@ -40,7 +40,6 @@ public class AcceptorThread extends StoppableLoopThread {
 	}
 	
 	public AcceptorThread() {
-		System.out.println("Constructor of Acceptor Thread");
 		this.server = new UDPMulticastServer(ACCEPTOR_GROUP_ADDRESS, ACCEPTOR_GROUP_PORT);
 		((UDPMulticastServer) this.server).joinMulticastGroup();
 	}
@@ -48,74 +47,57 @@ public class AcceptorThread extends StoppableLoopThread {
 	
 	@Override
     public void doProcessing() {
-		//System.out.println(" Acceptor thread doProcessing");
-		try {
-			Thread.sleep(3000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		
-		// Receive request multi-casted to acceptor's group
+		// Receive request multicasted to acceptor's group
 		Request request = server.receiveRequest();
 		
 		if (request != null) {
 			Utils.logMessage(this.getClass().getSimpleName() + " received multicast message : " + request.getMessage());
-			PaxosMessage paxosMessage = PaxosMessage.fromString(request.getMessage());
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				
-				e.printStackTrace();
-			}
-			//(paxosMessage.getMessageType() == PaxosMessageType.PREPARE) && 
-			//highestProposalNumberSeenByAcceptor=100; use this command to check the case of nack
-			if ((highestProposalNumberSeenByAcceptor < paxosMessage.getProposalNumber())){
-				highestProposalNumberSeenByAcceptor=paxosMessage.getProposalNumber();
-			System.out.println("creating the promise message...");
-			createPromiseForProposer(request, paxosMessage);
-			}
-			else{
-				System.out.println("creating the nack message...");
-				createNackForProposer(request, paxosMessage);
-			}
-		}
-		
-		else{
-			System.out.println(" Acceptor thread gets null request");
+			processRequest(request);
 		}
 	}
 	
-	
-    private void createNackForProposer(Request request,
-			PaxosMessage paxosMessage) {
-		 PaxosMessage confirmationMessage = new PaxosMessage();
-		    confirmationMessage.setClientId(paxosMessage.getClientId());
-		    confirmationMessage.setLockId(paxosMessage.getLockId());
-		    confirmationMessage.setMessageType(PaxosMessageType.NACK_ON_PREPARE);
-		    confirmationMessage.setProposalNumber(highestProposalNumberSeenByAcceptor);	
-		    Response responseFromAcceptor = new Response();
-		    responseFromAcceptor.setMessage(confirmationMessage.toString());
-		    responseFromAcceptor.setReceiverIpAddress(request.getSenderIpAddress());
-		    responseFromAcceptor.setReceiverPort(request.getSenderPort());
-		    server.sendResponse(responseFromAcceptor);
+    private void processRequest(Request request) {
+    	Response response = null;
+    	
+    	ProposerAcceptorMessage message = ProposerAcceptorMessage.fromString(request.getMessage());
+    	
+    	switch (message.getMessageType()) {
+    	case PREPARE:
+    		if (message.getProposalNumber() > highestProposalNumberSeen) {
+    			highestProposalNumberSeen = message.getProposalNumber();
+    			response = createResponseForProposer(request, message, ProposerAcceptorMessageType.PROMISE);
+    		} else {
+    			response = createResponseForProposer(request, message, ProposerAcceptorMessageType.NACK_ON_PREPARE);
+    		}
+    		break;
+    	case ACCEPT:
+    		if (message.getProposalNumber() == highestProposalNumberSeen) {
+    			response = createResponseForProposer(request, message, ProposerAcceptorMessageType.ACCEPT_CONFIRMATION);
+    		} else {
+    			response = createResponseForProposer(request, message, ProposerAcceptorMessageType.NACK_ON_ACCEPT);
+    		}
+    		break;
+		default:
+			// Do nothing
+			break;
+    	}
+    	
+    	if (response != null) {
+    		Utils.logMessage(this.getClass().getSimpleName() + " sending reply to proposer : " + response.getMessage());
+    		server.sendResponse(response);
+    	}
 	}
-
 
 	private Response createResponseForProposer(Request request,
-            PaxosMessage paxosMessage, PaxosMessageType paxosMessageType) {
+            ProposerAcceptorMessage message, ProposerAcceptorMessageType paxosMessageType) {
 	    // Send confirmation to the sender
-	    PaxosMessage confirmationMessage = new PaxosMessage();
-	    confirmationMessage.setClientId(paxosMessage.getClientId());
-	    confirmationMessage.setLockId(paxosMessage.getLockId());
-	    confirmationMessage.setMessageType(paxosMessageType);
-		confirmationMessage.setProposalNumber(highestProposalNumberSeenByAcceptor);	
+	    ProposerAcceptorMessage confirmationMessage = new ProposerAcceptorMessage();
+	    confirmationMessage.setClientId(message.getClientId());
+	    confirmationMessage.setLockId(message.getLockId());
+	    confirmationMessage.setProposalNumber(message.getProposalNumber());
+		confirmationMessage.setHighestProposalNumberSeen(highestProposalNumberSeen);
+		confirmationMessage.setMessageType(paxosMessageType);
 
-	    Response responseFromAcceptor = new Response();
-	    responseFromAcceptor.setMessage(confirmationMessage.toString());
-	    responseFromAcceptor.setReceiverIpAddress(request.getSenderIpAddress());
-	    responseFromAcceptor.setReceiverPort(request.getSenderPort());
-        server.sendResponse(responseFromAcceptor);
-	    
 	    // Construct request
 	    Response response = new Response();
 	    response.setMessage(confirmationMessage.toString());

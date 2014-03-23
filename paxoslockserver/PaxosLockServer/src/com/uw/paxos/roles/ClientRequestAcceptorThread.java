@@ -45,7 +45,7 @@ public class ClientRequestAcceptorThread extends StoppableLoopThread {
 			clientMessage = new ClientMessage();
 			clientMessage.setMessageType(ClientMessageType.DUMMY_REQUEST);
 		} else {
-			Utils.logMessage(this.getClass().getSimpleName() + " received request: " + request.getMessage());
+			Utils.logMessage(this.getClass().getSimpleName() + " received request : " + request.getMessage());
 			clientMessage = ClientMessage.fromString(request.getMessage());
 			ClientId clientId = new ClientId(request.getSenderIpAddress(), request.getSenderPort());
 			clientMessage.setClientId(clientId);

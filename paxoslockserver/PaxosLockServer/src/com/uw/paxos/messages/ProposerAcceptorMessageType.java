@@ -1,14 +1,10 @@
 package com.uw.paxos.messages;
 
-public enum PaxosMessageType {
+public enum ProposerAcceptorMessageType {
 	PREPARE, // Proposer to Acceptors (multicast)
 	PROMISE, // Acceptor to Proposer
 	NACK_ON_PREPARE,// Acceptor rejects prepare message
 	ACCEPT, // Proposer to Acceptors (multicast)
 	ACCEPT_CONFIRMATION, // Acceptor to Proposer
 	NACK_ON_ACCEPT, // Acceptors NACK the Accept message
-	LOCK_ACQUIRE, // Proposer to Learner (multicast)
-	LOCK_RELEASE, // Proposer to Learner (multicast)
-	LOCK_UPDATE_CONFIRMATION, // Learner to Proposer
-	LOCK_UPDATE_FAILED // Learner to Proposer
 }

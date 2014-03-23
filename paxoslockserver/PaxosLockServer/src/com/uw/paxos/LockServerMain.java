@@ -3,7 +3,6 @@ import java.io.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import com.uw.paxos.locks.DistributedLocks;
 import com.uw.paxos.messages.ClientMessage;
 import com.uw.paxos.roles.AcceptorThread;
 import com.uw.paxos.roles.ClientRequestAcceptorThread;
@@ -17,15 +16,20 @@ import com.uw.paxos.roles.StoppableLoopThread;
  */
 public class LockServerMain {
 	
-	private DistributedLocks locksTable; 
+	public static int MAX_SERVERS = 1;
+	
 	private BlockingQueue<ClientMessage> clientRequestQueue;
 	
 	public LockServerMain() {
-		locksTable = new DistributedLocks();
 		clientRequestQueue = new LinkedBlockingQueue<>();
 	}
 
 	public static void main(String args[]) throws Exception{
+		
+		if (args.length > 0) {
+			MAX_SERVERS = Integer.parseInt(args[0]);
+		}
+		
 		LockServerMain lockServer = new LockServerMain();
 		lockServer.go();
 	}
@@ -38,9 +42,9 @@ public class LockServerMain {
 		
 		// TODO: Extract port number from arguments to this process
 		threads[0] = new ClientRequestAcceptorThread(clientRequestQueue, 6000);
-		threads[1] = new ProposerThread(clientRequestQueue, locksTable, 6001);
+		threads[1] = new ProposerThread(clientRequestQueue, 6001);
 		threads[2] = new AcceptorThread();
-		threads[3] = new LearnerThread(locksTable);
+		threads[3] = new LearnerThread();
 		
 		// Start threads with different roles
 		for (Thread thread : threads) {

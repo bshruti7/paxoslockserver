@@ -6,7 +6,7 @@ import com.uw.paxos.utils.Utils;
  * @author Shruti
  *
  */
-public class PaxosClientMain {
+public class LockClientMain {
 	
 	public static void main(String[] args) {
 		LockClient client = new LockClient("localhost", 6000);

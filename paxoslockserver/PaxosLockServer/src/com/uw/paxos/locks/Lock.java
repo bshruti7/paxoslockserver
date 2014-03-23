@@ -28,39 +28,63 @@ public class Lock {
 		return acquiredBy;
 	}
 	
+	/**
+	 * Add client as the new owner
+	 * @param clientId Client who acquires the lock
+	 */
 	public void acquire(ClientId clientId) {
 		if (isAcquired()) {
-			throw new RuntimeException("Trying to acquire a already acquired lock." 
+			throw new RuntimeException("Trying to acquire an already acquired lock. Request by " 
 					+ clientId.getClientAddress() + ":"  + clientId.getClientPort()); // Verify that lock was held by this client
 		}
 		acquiredBy = clientId;
 	}
 	
+	/**
+	 * Release lock and give to next available client
+	 * 
+	 * @param clientId Client who is releasing the lock
+	 * @return New owner of the lock
+	 */
 	public ClientId release(ClientId clientId) {
 		if (!isAcquired() || !clientId.equals(getAcquiredBy())) {
-			throw new RuntimeException("Trying to release a lock which has not been acquired by the client " 
+			throw new RuntimeException("Trying to release a lock which has not been acquired by the client. Request by " 
 					+ clientId.getClientAddress() + ":"  + clientId.getClientPort()); // Verify that lock was held by this client
 		}
 		
-		ClientId lastAcquiredBy = acquiredBy;
 		acquiredBy = null;
+		acquire(getNextWaitingClient());	
 		
-		return lastAcquiredBy;
+		return getAcquiredBy();
 	}
 	
-	public void addWaitingClient(ClientId clientId) {
-		if (isAcquired() && clientId.equals(getAcquiredBy())) {
-			throw new RuntimeException("Unable to add client to the queue as client already has the lock "
+	/**
+	 * Add client to the lock wait queue
+	 * @param clientId Client who is waiting for this lock
+	 */
+	public void addClientToQueue(ClientId clientId) {
+		if (isAcquired()) {
+			if (!clientId.equals(getAcquiredBy())) {
+				clientsWaitingOnLock.add(clientId);
+			} else {
+				throw new RuntimeException("Unable to add client to the queue as client already has the lock. Request by "
+						+ clientId.getClientAddress() + ":"  + clientId.getClientPort()); // Verify that lock was held by this client
+			}
+		} else {
+			throw new RuntimeException("Trying to add lock to queue while lock is not acquired. Request by " 
 					+ clientId.getClientAddress() + ":"  + clientId.getClientPort()); // Verify that lock was held by this client
 		}
-		clientsWaitingOnLock.add(clientId);
 	}
 
-	public ClientId getNextWaitingClient() {
+	/**
+	 * Return next client waiting for this lock
+	 * @return
+	 */
+	private ClientId getNextWaitingClient() {
 		ClientId clientId = null;
 		
-		if (clientsWaitingOnLock.isEmpty()) {
-			clientsWaitingOnLock.remove();
+		if (!clientsWaitingOnLock.isEmpty()) {
+			clientId = clientsWaitingOnLock.remove();
 		}
 			
 		return clientId;

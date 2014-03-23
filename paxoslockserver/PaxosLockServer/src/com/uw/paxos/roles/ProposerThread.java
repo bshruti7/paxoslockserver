@@ -1,18 +1,18 @@
 package com.uw.paxos.roles;
 
-import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
+import com.uw.paxos.LockServerMain;
 import com.uw.paxos.connection.Request;
 import com.uw.paxos.connection.Response;
 import com.uw.paxos.connection.Server;
 import com.uw.paxos.connection.UDPUnicastServer;
-import com.uw.paxos.locks.DistributedLocks;
-import com.uw.paxos.locks.Lock;
 import com.uw.paxos.messages.ClientMessage;
 import com.uw.paxos.messages.ClientMessageType;
-import com.uw.paxos.messages.PaxosMessage;
-import com.uw.paxos.messages.PaxosMessageType;
+import com.uw.paxos.messages.ProposerLearnerMessage;
+import com.uw.paxos.messages.ProposerLearnerMessageType;
 import com.uw.paxos.utils.Utils;
 
 /**
@@ -27,19 +27,14 @@ import com.uw.paxos.utils.Utils;
  *
  */
 public class ProposerThread extends StoppableLoopThread {
-	
 	private BlockingQueue<ClientMessage> clientRequestQueue;
-	private DistributedLocks locks;
 	private Server server;
-	protected int proposalNumber;
-	private int proposalID;
+	private Proposer proposer;
 	
-	public ProposerThread(BlockingQueue<ClientMessage> clientRequestQueue, DistributedLocks locks, int portNumber) {
-		this.locks = locks;
+	public ProposerThread(BlockingQueue<ClientMessage> clientRequestQueue, int portNumber) {
 		this.clientRequestQueue = clientRequestQueue;
         this.server = new UDPUnicastServer(portNumber);
-        this.proposalNumber=0;
-      //  this.proposalID = this.get
+        this.proposer = new Proposer(server);
 	}
 	
 	@Override
@@ -56,206 +51,126 @@ public class ProposerThread extends StoppableLoopThread {
 		
 		if (message.getMessageType() != ClientMessageType.DUMMY_REQUEST) {
 			Utils.logMessage(this.getClass().getSimpleName() + " picked up request from queue : " + message.toString());
+			
+			// Valid request, process accordingly
 	    	processRequest(message);
 		}
     }
 	
 	private void processRequest(ClientMessage clientMessage) {
-		// Valid Request, process accordingly
-		if (clientMessage.getMessageType() == ClientMessageType.LOCK_RELEASE_REQUEST) {
-			// Check if lock is acquired and is acquired by this client
-			Lock lock = locks.getLock(clientMessage.getLockId());
+		switch (clientMessage.getMessageType()) {
+		case LOCK_ACQUIRE_REQUEST:
+			// Start Paxos to acquire the lock
+			// Blocking call until consensus is reached			
+			proposer.startPaxosAlgorithm(clientMessage);
 			
-			if (lock.isAcquired() && lock.getAcquiredBy().equals(clientMessage.getClientId())) {
-				// lock.release(clientMessage.getClientId()); // This code will go to learner
-				
-				sendPaxosToLearner(clientMessage, PaxosMessageType.LOCK_RELEASE ); // This code will go to Proposer.java
-				sendSuccessToClient(clientMessage, false);
-				
-				// Check for other lock in the lock queue
-				// ClientId clientId = lock.getNextWaitingClient();
-				
-				//if (clientId != null) {
-					// Run Paxos on clientId as the lock is available now
-				//}
-			} else {
-				// Client does not own this lock, so deny lock_release request
-				sendFailureToClient(clientMessage);
-			}
-		} else if (clientMessage.getMessageType() == ClientMessageType.LOCK_ACQUIRE_REQUEST) {
-			//The client has sent out a lock request.
-			//Check if the requested lock is  available in the distributed lock table.
-			Lock lock = locks.getLock(clientMessage.getLockId());
-			
-			if(lock.isAcquired()){
-				try {
-					// Add to lock waiting queue and conclude this request. 
-					// This client's request will be taken care of when client 
-					// holding this lock unlocks.
-					lock.addWaitingClient(clientMessage.getClientId());
-				} catch (Exception ex) {
-					Utils.logError(ex.getMessage());
-					sendFailureToClient(clientMessage);
-				}
-			}
-			else {
-				// Parse and act on request (start paxos)
-				//Proposer proposer = new Proposer(server);
-				proposalNumber = proposalNumber+1;
-				System.out.println("Client ID is "+clientMessage.getClientId());
-				startPaxosAlgorithm(clientMessage,proposalNumber);
-				
-				sendPaxosToLearner(clientMessage, PaxosMessageType.LOCK_ACQUIRE ); // This code will go to Proposer.java
-				boolean isSuccessful = checkLearnerResponse();
-				if (isSuccessful) {
-					sendSuccessToClient(clientMessage, true);
-				} else {
-					sendFailureToClient(clientMessage);
-					Utils.logError("Error occured while trying to secure lock for request " + clientMessage.toString());
-				}
-			}
+			sendMessageToLearners(clientMessage, ProposerLearnerMessageType.LOCK_ACQUIRE);
+			receiveAndHandleLearnerResponse(clientMessage);
+			break;
+		case LOCK_RELEASE_REQUEST:
+			sendMessageToLearners(clientMessage, ProposerLearnerMessageType.LOCK_RELEASE);
+			receiveAndHandleLearnerResponse(clientMessage);
+			break;
+		default:
+			// Do nothing
+			break;
 		}
 	}
 	
-	public void startPaxosAlgorithm(ClientMessage clientMessage, int proposalNumber) throws UnknownHostException {
-		//generate proposalNumber
-		//proposalNumber = proposalNumber + 1 ;
-		System.out.println("The proposal number currently is "+proposalNumber);
-		sendPrepareMessageToAcceptor(proposalNumber,clientMessage);
-		
-		checkQuorumForAcceptMessages();
-		//How to simulate this condition where this proposer gets replies from all the acceptors and then checks if quorum obtained or not?
-		//especially from the connectivity point of view. Not able to think of right way to capture promises and then check quorum
-		//boolean isQuorumObtained = checkQuoroum();
-		/*if(!isQuorumObtained){//If quorum not obtained what do we do? 
-			//send client the reponse that his rquest cannot be satisfied at this time. Please try later?
-		}
-		else{
-			sendAcceptMessage();
-			boolean isaAcceptedByQuorum = checkQuorumForAcceptMessages();
-			if(isaAcceptedByQuorum)
-				{
-				//learner.lock(request2);
-				}
-			else{
-				//Hoo to handles nack on accept request being rejected.
-					}
-			
-		}
-		*/
+	private void sendMessageToLearners(ClientMessage clientMessage, ProposerLearnerMessageType messageType) {
+        ProposerLearnerMessage message = new ProposerLearnerMessage();
+        message.setLockId(clientMessage.getLockId());
+        message.setMessageType(messageType);
+        message.setClientId(clientMessage.getClientId());
+        
+        Response response = generateResponseForLearner(message);
+        
+        Utils.logMessage(this.getClass().getSimpleName() + " sending multicast to learners : " + message);
+        
+        server.sendResponse(response);
 	}
 	
-	
-	/**
-	 * This method checks if a quorum has been achieved for the replies to the accept messages.
-	 */
-	private void checkQuorumForAcceptMessages() {
-		//Check quorum for dummy messages.
-		
-		Request receivedFromAcceptor=new Request();
-		receivedFromAcceptor = server.receiveRequest();		  
-		System.out.println("GOt this from acceptor at proposer:"+receivedFromAcceptor.getMessage());  
-		
-		
-		//return true;
-	}
-
-	
-	/**
-	 * This method generates an accept message and multicasts this message to all the acceptors.
-	 */
-	private void sendAcceptMessage() {
-		// Send out a multicast message to all acceptor with an AcceptMessage
-		//AcceptMessage acceptMessage = new AcceptMessage(proposerId, proposalNumber, "");
-		
-	
-	}
-	
-	/**
-	 * This method receives promises or NACKS from the acceptors and checks if a quorm is achieved.
-	 */
-	private boolean checkQuoroum() {
-		//Code to check quorum
-		return true;
-	}
-
-	/**
-	 * Multicasts prepare messages to all the acceptors. 
-	 * @param clientMessage 
-	 * @param clientMessage 
-	 * @throws UnknownHostException 
-	 * 
-	 */
-	private void sendPrepareMessageToAcceptor(int proposalNumber, ClientMessage clientMessage) throws UnknownHostException {
-	  PaxosMessage paxosMessage =  new PaxosMessage();
-	  paxosMessage.setProposalNumber(proposalNumber);
-	  paxosMessage.setMessageType(PaxosMessageType.PREPARE);
-	  paxosMessage.setClientId(clientMessage.getClientId());
-	  paxosMessage.setLockId(clientMessage.getLockId());
-	  Response response=generateResponseForAcceptor(paxosMessage);
-	  System.out.println(" Proposer has to send to Acceptor at  " + response.getReceiverIpAddress()+","+response.getReceiverPort()+","+response.getMessage());
-	  server.sendResponse(response);
-	 // Response response = generateResponseForLearnerFromPaxosMessage(paxosMessage);
-	  //server2.sendResponse(response);
-	  // multicast.sendMulticast(paxosMessage);
-	  
-	}
-
-
-	private Response generateResponseForAcceptor(PaxosMessage paxosMessage2) {
-		// TODO Auto-generated method stub
-		
-		Response response = new Response();
-		response.setReceiverIpAddress(AcceptorThread.ACCEPTOR_GROUP_ADDRESS);
-		response.setReceiverPort(AcceptorThread.ACCEPTOR_GROUP_PORT);
-		response.setMessage(paxosMessage2.toString());
-		
-		//System.out.println(" response has all these " + response.getReceiverIpAddress()+","+response.getReceiverPort()+","+response.getMessage());
-	    return response;
-	}
-		
-	private void sendSuccessToClient(ClientMessage clientMessage, boolean locked) {
-		ClientMessage confirmationMessage = new ClientMessage();
-		confirmationMessage.setLockId(clientMessage.getLockId());
-		if (locked) {
-			confirmationMessage.setMessageType(ClientMessageType.LOCK_GRANTED);
-		} else {
-			confirmationMessage.setMessageType(ClientMessageType.LOCK_RELEASED);
-		}
-		
-		Response response = generateResponseForClientFromClientMessage(clientMessage,
-                confirmationMessage);
-		server.sendResponse(response);
-	}
-	
-	private void sendFailureToClient(ClientMessage clientMessage) {
-		ClientMessage confirmationMessage = new ClientMessage();
-		confirmationMessage.setLockId(clientMessage.getLockId());
-		confirmationMessage.setMessageType(ClientMessageType.REQUEST_DENIED);
-		
-		Response response = generateResponseForClientFromClientMessage(clientMessage,
-                confirmationMessage);
-		server.sendResponse(response);
-	}
-	
-	private Response generateResponseForLearnerFromPaxosMessage(
-            PaxosMessage paxosMessage) {
+	private Response generateResponseForLearner(
+            ProposerLearnerMessage message) {
 	    Response response = new Response();
 		response.setReceiverIpAddress(LearnerThread.LEARNER_GROUP_ADDRESS);
 		response.setReceiverPort(LearnerThread.LEARNER_GROUP_PORT);
-		response.setMessage(paxosMessage.toString());
+		response.setMessage(message.toString());
 	    return response;
     }
-	/*
-	private Response generateResponseForAcceptorFromPaxosMessage(
-            PaxosMessage paxosMessage) {
-	    Response response = new Response();
-		response.setReceiverIpAddress(AcceptorThread.ACCEPTOR_GROUP_ADDRESS);
-		response.setReceiverPort(AcceptorThread.ACCEPTOR_GROUP_PORT);
-		response.setMessage(paxosMessage.toString());
-	    return response;
+	
+	private void receiveAndHandleLearnerResponse(ClientMessage clientMessage) {
+		try {
+			// Confirm that all learners has agreed
+			ProposerLearnerMessage agreedOnMessage = getAgreementMessage();
+			Utils.logMessage(this.getClass().getSimpleName() + " received agreement on : " + agreedOnMessage);
+			
+			switch (agreedOnMessage.getMessageType()) {
+			case LOCK_ACQUIRED:
+				sendClientMessage(clientMessage, ClientMessageType.LOCK_GRANTED);
+				break;
+			case LOCK_RELEASED:
+				sendClientMessage(clientMessage, ClientMessageType.LOCK_RELEASED);
+				
+				// Check if lock has new owner
+				if (agreedOnMessage.getNewOwnerClientId() != null) {
+					// Send confirmation to new lock owner
+					ClientMessage newOwnerMessage = new ClientMessage();
+					newOwnerMessage.setClientId(agreedOnMessage.getNewOwnerClientId());
+					newOwnerMessage.setLockId(agreedOnMessage.getLockId());
+					sendClientMessage(newOwnerMessage, ClientMessageType.LOCK_RELEASED);
+				}
+				break;
+			case LOCK_QUEUED:
+				// Do nothing
+				break;
+			case LOCK_UPDATE_FAILED:
+				sendClientMessage(clientMessage, ClientMessageType.REQUEST_DENIED);
+				break;
+			default:
+				break;
+			}
+		} catch (RuntimeException ex) {
+			Utils.logError("Error while updating lock. Learners are in disagreement for lock " + clientMessage.getLockId()
+					+ " request by : " + clientMessage.getClientId());
+		}
     }
-    */
+	
+	private ProposerLearnerMessage getAgreementMessage() {
+		Map<ProposerLearnerMessage, Integer> messageMap = new HashMap<>();
+		int acceptanceCriteriaCount = (LockServerMain.MAX_SERVERS / 2) + 1;
+		
+		for (int i = 0; i < LockServerMain.MAX_SERVERS; i++) {
+			Request request = server.receiveRequest();
+			if (request != null) {
+				ProposerLearnerMessage message = ProposerLearnerMessage.fromString(request.getMessage());
+				if (messageMap.containsKey(message)) {
+					Integer count = messageMap.get(message);
+					messageMap.put(message, count + 1);
+				} else {
+					messageMap.put(message, 1);
+				}
+			}
+		}
+		
+		for (ProposerLearnerMessage message: messageMap.keySet()) {
+			if (messageMap.get(message) >= acceptanceCriteriaCount) {
+				return message;
+			}
+		}
+		
+		throw new RuntimeException();
+	}
+
+	private void sendClientMessage(ClientMessage clientMessage, ClientMessageType messageType) {
+		ClientMessage confirmationMessage = new ClientMessage();
+		confirmationMessage.setLockId(clientMessage.getLockId());
+		confirmationMessage.setMessageType(messageType);
+		
+		Response response = generateResponseForClientFromClientMessage(clientMessage,
+                confirmationMessage);
+		server.sendResponse(response);
+	}
 	
 	private Response generateResponseForClientFromClientMessage(
             ClientMessage clientMessage, ClientMessage confirmationMessage) {
@@ -264,17 +179,5 @@ public class ProposerThread extends StoppableLoopThread {
 		response.setReceiverPort(clientMessage.getClientId().getClientPort());
 		response.setMessage(confirmationMessage.toString());
 	    return response;
-    }
-	
-	private boolean checkLearnerResponse() {
-		Request request = server.receiveRequest();
-		if (request != null) {
-			PaxosMessage paxosMessage = PaxosMessage.fromString(request.getMessage());
-			if (paxosMessage.getMessageType() == PaxosMessageType.LOCK_UPDATE_CONFIRMATION) {
-				return true;
-			}
-		}
-		
-		return false;
     }
 }

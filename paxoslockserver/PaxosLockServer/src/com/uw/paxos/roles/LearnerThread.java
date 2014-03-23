@@ -9,8 +9,9 @@ import com.uw.paxos.connection.Server;
 import com.uw.paxos.connection.UDPMulticastServer;
 import com.uw.paxos.locks.DistributedLocks;
 import com.uw.paxos.locks.Lock;
-import com.uw.paxos.messages.PaxosMessage;
-import com.uw.paxos.messages.PaxosMessageType;
+import com.uw.paxos.messages.ClientId;
+import com.uw.paxos.messages.ProposerLearnerMessage;
+import com.uw.paxos.messages.ProposerLearnerMessageType;
 import com.uw.paxos.utils.Utils;
 
 /**
@@ -40,8 +41,8 @@ public class LearnerThread extends StoppableLoopThread {
         } 
 	}
 	
-	public LearnerThread(DistributedLocks locks) {
-		this.locks = locks;
+	public LearnerThread() {
+		this.locks = new DistributedLocks();
         this.server = new UDPMulticastServer(LEARNER_GROUP_ADDRESS, LEARNER_GROUP_PORT);
         ((UDPMulticastServer) this.server).joinMulticastGroup();
 	}
@@ -50,46 +51,61 @@ public class LearnerThread extends StoppableLoopThread {
     public void doProcessing() {
 		// Receive request multicasted to learner's group
 		Request request = server.receiveRequest();
-		//System.out.println("Request has "+request.getSenderPort()+","+request.getMessage()+",");
 		
 		if (request != null) {
-	    	Utils.logMessage(this.getClass().getSimpleName() + " received multicast message : " + request.getMessage());
-	    	PaxosMessage paxosMessage = PaxosMessage.fromString(request.getMessage());
-			
-	    	// Get lock
-			Lock lock = locks.getLock(paxosMessage.getLockId());
-			
-			try { 
-				// Check if Proposer ordered to acquire the lock
-				if (paxosMessage.getMessageType() == PaxosMessageType.LOCK_ACQUIRE) {
-					lock.acquire(paxosMessage.getClientId());
-				}
-				
-				// Check if Proposer ordered to release the lock
-				if (paxosMessage.getMessageType() == PaxosMessageType.LOCK_RELEASE) {
-					lock.release(paxosMessage.getClientId());
-				}
-				
-				Response response = createResponseForProposer(request,
-                        paxosMessage, PaxosMessageType.LOCK_UPDATE_CONFIRMATION);
-				
-				server.sendResponse(response);
-			} catch (RuntimeException ex) {
-				Utils.logError(ex.getMessage());
-				Response response = createResponseForProposer(request,
-                        paxosMessage, PaxosMessageType.LOCK_UPDATE_FAILED);
-				server.sendResponse(response);
-			}
+			Utils.logMessage(this.getClass().getSimpleName() + " received multicast message : " + request.getMessage());
+			processRequest(request);
 		}	    
     }
 
-	private Response createResponseForProposer(Request request,
-            PaxosMessage paxosMessage, PaxosMessageType paxosMessageType) {
+	private void processRequest(Request request) {
+		Response response = null;
+		
+		ProposerLearnerMessage proposerLearnerMessage = ProposerLearnerMessage.fromString(request.getMessage());
+		Lock lock = locks.getLock(proposerLearnerMessage.getLockId());
+		
+		try { 
+			// Check if Proposer ordered to acquire the lock
+			switch(proposerLearnerMessage.getMessageType()) {
+			case LOCK_ACQUIRE:
+				ProposerLearnerMessageType returnMessageType = 
+						ProposerLearnerMessageType.LOCK_UPDATE_FAILED; // Default		
+				if (!lock.isAcquired()) {
+					lock.acquire(proposerLearnerMessage.getClientId());
+					returnMessageType = ProposerLearnerMessageType.LOCK_ACQUIRED;
+				} else {
+					lock.addClientToQueue(proposerLearnerMessage.getClientId());
+					returnMessageType = ProposerLearnerMessageType.LOCK_QUEUED;
+				}
+				response = createResponseForProposer(request, proposerLearnerMessage, 
+						null, returnMessageType);
+				break;
+				
+			case LOCK_RELEASE:
+				ClientId newOwnerClient = lock.release(proposerLearnerMessage.getClientId());
+				response = createResponseForProposer(request, proposerLearnerMessage, 
+						newOwnerClient, ProposerLearnerMessageType.LOCK_RELEASED);
+				break;
+			default:
+				// Do nothing
+				break;
+			}
+		} catch (RuntimeException ex) {
+			Utils.logError(ex.getMessage());
+		}
+		if (response != null) {
+			server.sendResponse(response);
+		}
+	}
+
+	private Response createResponseForProposer(Request request, ProposerLearnerMessage proposerLearnerMessage, 
+			ClientId newOwnerClient, ProposerLearnerMessageType paxosMessageType) {
 	    // Send confirmation to the sender
-	    PaxosMessage confirmationMessage = new PaxosMessage();
-	    confirmationMessage.setClientId(paxosMessage.getClientId());
-	    confirmationMessage.setLockId(paxosMessage.getLockId());
+	    ProposerLearnerMessage confirmationMessage = new ProposerLearnerMessage();
+	    confirmationMessage.setClientId(proposerLearnerMessage.getClientId());
+	    confirmationMessage.setLockId(proposerLearnerMessage.getLockId());
 	    confirmationMessage.setMessageType(paxosMessageType);
+	    confirmationMessage.setNewOwnerClientId(newOwnerClient);
 	    
 	    // Construct request
 	    Response response = new Response();

@@ -11,8 +11,8 @@ import com.google.gson.Gson;
  * @author Aditi  
  *
  */
-public class PaxosMessage {
-	private PaxosMessageType messageType;
+public class ProposerAcceptorMessage {
+	private ProposerAcceptorMessageType messageType;
 	private ClientId clientId;
 	private int lockId;
 	private int highestProposalNumberSeen;
@@ -24,9 +24,9 @@ public class PaxosMessage {
 	 * @param string Json formatted string
 	 * @return New object of this class
 	 */
-	public static PaxosMessage fromString(String jsonString) {
+	public static ProposerAcceptorMessage fromString(String jsonString) {
 		Gson gson = new Gson();
-		return gson.fromJson(jsonString, PaxosMessage.class);
+		return gson.fromJson(jsonString, ProposerAcceptorMessage.class);
 	}
 
 	/**
@@ -39,11 +39,11 @@ public class PaxosMessage {
 		return jsonString;
 	}
 	
-	public PaxosMessageType getMessageType() {
+	public ProposerAcceptorMessageType getMessageType() {
 		return messageType;
 	}
 
-	public void setMessageType(PaxosMessageType messageType) {
+	public void setMessageType(ProposerAcceptorMessageType messageType) {
 		this.messageType = messageType;
 	}
 
