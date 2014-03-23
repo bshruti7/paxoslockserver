@@ -150,7 +150,6 @@ public class ProposerThread extends StoppableLoopThread {
 		for (int i = 0; i < LockServerMain.SERVERS_IN_QUORUM; i++) {
 			Request request = server.receiveRequest();
 			if (request != null) {
-				Utils.logError(request.getMessage());
 				ProposerLearnerMessage message = ProposerLearnerMessage.fromString(request.getMessage());
 				if (messageMap.containsKey(message)) {
 					Integer count = messageMap.get(message);
