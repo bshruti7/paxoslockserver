@@ -11,12 +11,14 @@ public class LockClientMain {
 	public static void main(String[] args) {
 		
 		String hostname = "localhost";
+		int serverport = 6000;
 		
 		if (args.length > 0) {
 			hostname = args[0];
+			serverport = Integer.parseInt(args[1]);		
 		}
 		
-		LockClient client = new LockClient(hostname, 6000);
+		LockClient client = new LockClient(hostname, serverport);
 		
 		for (int i = 0; i < 2; i++) {
 			int lockId = getRandomLockID();
