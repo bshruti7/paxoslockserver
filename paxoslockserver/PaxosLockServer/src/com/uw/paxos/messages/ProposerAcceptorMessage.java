@@ -78,4 +78,37 @@ public class ProposerAcceptorMessage {
 	public void setProposalNumber(int proposalNumber) {
 		this.proposalNumber = proposalNumber;
 	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((clientId == null) ? 0 : clientId.hashCode());
+		result = prime * result + lockId;
+		result = prime * result
+				+ ((messageType == null) ? 0 : messageType.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ProposerAcceptorMessage other = (ProposerAcceptorMessage) obj;
+		if (clientId == null) {
+			if (other.clientId != null)
+				return false;
+		} else if (!clientId.equals(other.clientId))
+			return false;
+		if (lockId != other.lockId)
+			return false;
+		if (messageType != other.messageType)
+			return false;
+		return true;
+	}
 }	

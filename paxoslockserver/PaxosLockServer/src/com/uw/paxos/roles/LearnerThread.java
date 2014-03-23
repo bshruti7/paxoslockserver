@@ -94,6 +94,7 @@ public class LearnerThread extends StoppableLoopThread {
 			Utils.logError(ex.getMessage());
 		}
 		if (response != null) {
+			Utils.logMessage(this.getClass().getSimpleName() + " sending reply to proposer : " + response.getMessage());
 			server.sendResponse(response);
 		}
 	}
