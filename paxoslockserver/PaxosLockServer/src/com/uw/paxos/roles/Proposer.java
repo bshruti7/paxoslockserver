@@ -44,7 +44,10 @@ public class Proposer{
 		// Generate proposalNumber
 		proposalNumber++;
 		
+		// Run until there is no agreement on ACCEPT
 		while (!hasAgreement && !shutdownRequested) {
+			
+			// Run until there is no agreement on PREPARE
 			while (!hasAgreement && !shutdownRequested) {
 				Utils.logMessage("Starting Paxos with current proposal number : " + proposalNumber);
 				
