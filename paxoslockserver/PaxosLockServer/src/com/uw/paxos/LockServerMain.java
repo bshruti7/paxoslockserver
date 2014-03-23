@@ -9,6 +9,7 @@ import com.uw.paxos.roles.ClientRequestAcceptorThread;
 import com.uw.paxos.roles.LearnerThread;
 import com.uw.paxos.roles.ProposerThread;
 import com.uw.paxos.roles.StoppableLoopThread;
+import com.uw.paxos.utils.Utils;
 
 /**
  * @author Shruti
@@ -16,7 +17,7 @@ import com.uw.paxos.roles.StoppableLoopThread;
  */
 public class LockServerMain {
 	
-	public static int MAX_SERVERS = 1;
+	public static int SERVERS_IN_QUORUM = 1;
 	
 	private BlockingQueue<ClientMessage> clientRequestQueue;
 	
@@ -27,8 +28,10 @@ public class LockServerMain {
 	public static void main(String args[]) throws Exception{
 		
 		if (args.length > 0) {
-			MAX_SERVERS = Integer.parseInt(args[0]);
+			SERVERS_IN_QUORUM = Integer.parseInt(args[0]);
 		}
+		
+		Utils.logMessage("Starting Server. Servers in Quorum : " + SERVERS_IN_QUORUM);
 		
 		LockServerMain lockServer = new LockServerMain();
 		lockServer.go();

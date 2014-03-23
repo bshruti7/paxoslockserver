@@ -9,7 +9,14 @@ import com.uw.paxos.utils.Utils;
 public class LockClientMain {
 	
 	public static void main(String[] args) {
-		LockClient client = new LockClient("localhost", 6000);
+		
+		String hostname = "localhost";
+		
+		if (args.length > 0) {
+			hostname = args[0];
+		}
+		
+		LockClient client = new LockClient(hostname, 6000);
 		
 		for (int i = 0; i < 5; i++) {
 			int lockId = getRandomLockID();

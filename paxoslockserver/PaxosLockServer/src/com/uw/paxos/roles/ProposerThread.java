@@ -138,9 +138,9 @@ public class ProposerThread extends StoppableLoopThread {
 	
 	private ProposerLearnerMessage getAgreementMessage() {
 		Map<ProposerLearnerMessage, Integer> messageMap = new HashMap<>();
-		int acceptanceCriteriaCount = (LockServerMain.MAX_SERVERS / 2) + 1;
+		int acceptanceCriteriaCount = (LockServerMain.SERVERS_IN_QUORUM / 2) + 1;
 		
-		for (int i = 0; i < LockServerMain.MAX_SERVERS; i++) {
+		for (int i = 0; i < LockServerMain.SERVERS_IN_QUORUM; i++) {
 			Request request = server.receiveRequest();
 			if (request != null) {
 				ProposerLearnerMessage message = ProposerLearnerMessage.fromString(request.getMessage());
