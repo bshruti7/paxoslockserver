@@ -26,7 +26,7 @@ public class LockServerMain {
 		clientRequestQueue = new LinkedBlockingQueue<>();
 	}
 
-	public static void main(String args[]) throws Exception{
+	public static void main(String args[]) {
 		
 		if (args.length > 0) {
 			BASE_PORT = Integer.parseInt(args[0]);
@@ -39,7 +39,7 @@ public class LockServerMain {
 		lockServer.go();
 	}
 	
-	public void go() throws Exception{
+	public void go() {
 		boolean shutdownRequested = false;
 		
 		// Create three threads, on each for Proposer, Acceptor and Learner
@@ -59,12 +59,27 @@ public class LockServerMain {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		
 		while (!shutdownRequested) {
-			String command = br.readLine();
+			String command = "";
+			try {
+				command = br.readLine();
+			} catch (IOException ex) {
+				Utils.logError(ex.getMessage());
+			}
 			if(0 == command.compareToIgnoreCase("shutdown")) {
 				shutdownRequested = true;
 				for (StoppableLoopThread thread : threads) {
 					thread.requestShutdown();
 		        }
+			} else if(0 == command.compareToIgnoreCase("killa")) {
+				int durationInMilliseconds = 30000; // 30000 millis or 30 seconds
+				threads[2].requestShutdown();
+				try {
+					Thread.sleep(durationInMilliseconds);
+				} catch (InterruptedException ex) {
+					Utils.logError(ex.getMessage());
+				}
+				threads[2] = new AcceptorThread();
+				threads[2].start();
 			}
 		}
 	}
