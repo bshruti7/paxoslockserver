@@ -14,7 +14,7 @@ public class UDPUnicastServer extends UDPServer {
 			this.serverSocket.setSoTimeout(TIMEOUT_IN_MILLIS);
 	        Utils.logMessage("Server bound to UDP port: " + this.getPort());
         } catch (IOException ex) {
-        	Utils.logError("Unable to UDP port. Error : " + ex.getMessage());
+        	Utils.logError("Unable to bind UDP port. Error : " + ex.getMessage());
         }
     }
 }

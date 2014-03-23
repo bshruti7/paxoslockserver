@@ -25,7 +25,7 @@ public class UDPMulticastServer extends UDPServer {
 	        this.receivingGroupAddress = groupAddress;
 	        Utils.logMessage("Server bound to UDP port: " + this.getPort());
         } catch (IOException ex) {
-        	Utils.logError("Unable to UDP port. Error : " + ex.getMessage());
+        	Utils.logError("Unable to bind UDP port. Error : " + ex.getMessage());
         }		
 	}
 	
