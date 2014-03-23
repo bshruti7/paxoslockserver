@@ -28,7 +28,7 @@ public class AcceptorThread extends StoppableLoopThread {
 	public static InetAddress ACCEPTOR_GROUP_ADDRESS;
 	
 	private Server server;
-	private int highestProposalNumberSeen=0;
+	private int highestProposalNumberSeen;
 	
 	// Static block to initialize static objects
 	static {
@@ -40,6 +40,7 @@ public class AcceptorThread extends StoppableLoopThread {
 	}
 	
 	public AcceptorThread() {
+		this.highestProposalNumberSeen = 0;
 		this.server = new UDPMulticastServer(ACCEPTOR_GROUP_ADDRESS, ACCEPTOR_GROUP_PORT);
 		((UDPMulticastServer) this.server).joinMulticastGroup();
 	}

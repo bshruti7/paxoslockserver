@@ -37,10 +37,11 @@ public class Proposer{
 		
 		// Generate proposalNumber
 		proposalNumber++;
-		Utils.logMessage("Starting Paxos with current proposal number : " + proposalNumber);
 		
 		while (!hasAgreement) {
 			while (!hasAgreement) {
+				Utils.logMessage("Starting Paxos with current proposal number : " + proposalNumber);
+				
 				sendMessageToAcceptors(clientMessage, ProposerAcceptorMessageType.PREPARE);
 				
 				// Get Acceptors decision
@@ -50,6 +51,8 @@ public class Proposer{
 					if (agreedOnMessage.getMessageType() == ProposerAcceptorMessageType.PROMISE) {
 						Utils.logMessage(this.getClass().getSimpleName() + " received agreement on : " + agreedOnMessage);
 						hasAgreement = true;
+					} else {
+						incrementProposalNumberAndSleepRandomly();
 					}
 				} else {
 					incrementProposalNumberAndSleepRandomly();
@@ -66,6 +69,8 @@ public class Proposer{
 				if (agreedOnMessage.getMessageType() == ProposerAcceptorMessageType.ACCEPT_CONFIRMATION) {
 					Utils.logMessage(this.getClass().getSimpleName() + " has agreement : " + agreedOnMessage);
 					hasAgreement = true;
+				} else {
+					incrementProposalNumberAndSleepRandomly();
 				}
 			} else {
 				incrementProposalNumberAndSleepRandomly();
@@ -80,7 +85,7 @@ public class Proposer{
 		
 		// Wait for random millis before making another request
 		try {
-			Thread.sleep((long) (Math.random() * 2000));
+			Thread.sleep((long) (Math.random() * 5000));
 		} catch (InterruptedException e) {
 			Utils.logError(e.getMessage());
 		}

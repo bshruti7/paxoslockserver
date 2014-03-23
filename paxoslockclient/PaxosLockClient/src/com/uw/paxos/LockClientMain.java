@@ -18,7 +18,7 @@ public class LockClientMain {
 		
 		LockClient client = new LockClient(hostname, 6000);
 		
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 2; i++) {
 			int lockId = getRandomLockID();
 			boolean isSuccessful = client.acquire(lockId);
 			
