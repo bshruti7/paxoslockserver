@@ -22,9 +22,15 @@ import com.uw.paxos.utils.Utils;
 public class Proposer{
 	private Server server;
 	private int proposalNumber = 0;
+	private boolean shutdownRequested;
 
 	public Proposer(Server server) {
+		shutdownRequested = false;
 		this.server = server;
+	}
+	
+	public void requestShutdown() {
+		shutdownRequested = true;
 	}
 
 	/**
@@ -38,8 +44,8 @@ public class Proposer{
 		// Generate proposalNumber
 		proposalNumber++;
 		
-		while (!hasAgreement) {
-			while (!hasAgreement) {
+		while (!hasAgreement && !shutdownRequested) {
+			while (!hasAgreement && !shutdownRequested) {
 				Utils.logMessage("Starting Paxos with current proposal number : " + proposalNumber);
 				
 				sendMessageToAcceptors(clientMessage, ProposerAcceptorMessageType.PREPARE);
@@ -57,6 +63,10 @@ public class Proposer{
 				} else {
 					incrementProposalNumberAndSleepRandomly();
 				}
+			}
+			
+			if (shutdownRequested) {
+				break;
 			}
 			
 			// We have Promise from all acceptors, so send them accept message

@@ -57,6 +57,12 @@ public class ProposerThread extends StoppableLoopThread {
 		}
     }
 	
+	@Override
+	public void requestShutdown() {
+		proposer.requestShutdown();
+		super.requestShutdown();
+	}
+	
 	private void processRequest(ClientMessage clientMessage) {
 		switch (clientMessage.getMessageType()) {
 		case LOCK_ACQUIRE_REQUEST:
@@ -132,7 +138,7 @@ public class ProposerThread extends StoppableLoopThread {
 			}
 		} catch (RuntimeException ex) {
 			Utils.logError("Error while updating lock. Learners are in disagreement for lock " + clientMessage.getLockId()
-					+ " request by : " + clientMessage.getClientId());
+					+ " request by : " + clientMessage);
 		}
     }
 	
